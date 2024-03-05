@@ -2,12 +2,12 @@
 
 A https://github.com/a-maugli account alatt létrehoztam az akt02 repository-t.
 
-Elindítottam a gitpot-ot oly módon, hogy odamásoltam a `gitpod.io` után a reporsitory URL-t:
+Elindítottam a gitpot-ot oly módon, hogy odamásoltam a `gitpod.io` után a repository URL-jét:
 ```
 https://gitpod.io/#https://github.com/a-maugli/akt02
 ```
 
-A gitpod-ban történt előkészítés:
+A gitpod-ban történt előkészítés a következő volt:
 ```
 # AlgoKit installálás
 gitpod /workspace/akt02 (main) $ python3 -m pip install --user pipx
@@ -22,17 +22,17 @@ docker: indexer Pulling
 docker: conduit Pulling
 docker: algod Pulling
 ...
-# Ellenőrzés, hogy a localnet indítása sikerült
+# Ellenőrzés, hogy a localnet indítása sikerült-e
 gitpod /workspace/akt02 (main) $ docker container ls
 CONTAINER ID   IMAGE                     COMMAND                  CREATED          STATUS          PORTS                                                                                                                                                 NAMES
 2ec38f267de4   algorand/indexer:latest   "docker-entrypoint.s…"   16 minutes ago   Up 16 minutes   0.0.0.0:8980->8980/tcp, :::8980->8980/tcp                                                                                                             algokit_sandbox_indexer
 2b2389414e5b   algorand/conduit:latest   "docker-entrypoint.sh"   16 minutes ago   Up 48 seconds                                                                                                                                                         algokit_sandbox_conduit
 10e1f592a387   postgres:13-alpine        "docker-entrypoint.s…"   16 minutes ago   Up 16 minutes   0.0.0.0:5443->5432/tcp, :::5443->5432/tcp                                                                                                             algokit_sandbox_postgres
 395abcae3815   algorand/algod:latest     "/node/run/run.sh"       16 minutes ago   Up 16 minutes   4160/tcp, 9100/tcp, 0.0.0.0:9392->9392/tcp, :::9392->9392/tcp, 0.0.0.0:4002->7833/tcp, :::4002->7833/tcp, 0.0.0.0:4001->8080/tcp, :::4001->8080/tcp   algokit_sandbox_algod
-# Ports fülön aa portok public-ká tétele, a lakatra történő kattintással
+# Ports fülön a portok public-ká tétele, a lakatra történő kattintással
 # Dappflow blokklánc vizsgáló indítása
 gitpod /workspace/akt02 (main) $algokit explore
-# Nyit egy Dappflow ablakot, de nem tud hozzákapcsolódni a localnet-hez
+# Ismert hiba: megnyílik egy Dappflow ablak, de a blokklánc vizsgáló nem tud hozzákapcsolódni a localnet-hez
 # AlgoKit projekt inicializálás
 gitpod /workspace/akt02 (main) $ algokit init
 algokit init
@@ -47,6 +47,7 @@ Poetry not found; attempting to install it...
 Installing Python dependencies and setting up Python virtual environment via Poetry
 ...
 ```
+
 A Python API példák futtatása:
 ```
 # Python virtuális környezet inicializálás
