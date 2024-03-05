@@ -1,6 +1,6 @@
 # Néhány példa az Algorand Python SDK és JS SDK használatára
 
-A \href{https://github.com/a-maugli} account alatt létrehoztam az akt02 repository-t.
+A https://github.com/a-maugli account alatt létrehoztam az akt02 repository-t.
 
 Elindítottam a gitpot-ot oly módon, hogy odamásoltam a \texttt{gitpod.io} után a reporsitory URL-t:
 ```
