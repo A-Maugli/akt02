@@ -1,13 +1,13 @@
 # Néhány példa az Algorand Python SDK és JS SDK használatára
 
-A https://github.com/a-maugli account alatt létrehoztam az akt02 repository-t. (akt, mint AlgoKit Trial)
+A https://github.com/a-maugli account alatt létrehoztam az akt02 repository-t. (akt, mint AlgoKit Trial, és 02, mert ez volt a második nekifutásom)
 
 Elindítottam a gitpot-ot oly módon, hogy odamásoltam a `gitpod.io` után a repository URL-jét:
 ```
 https://gitpod.io/#https://github.com/a-maugli/akt02
 ```
 
-A gitpod-ban történt előkészítés a következő volt:
+A gitpod-ban történt előkészítés, amire csak egyszer volt szükség, a következő volt:
 ```
 # AlgoKit installálás
 gitpod /workspace/akt02 (main) $ python3 -m pip install --user pipx
