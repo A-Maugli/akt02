@@ -2,7 +2,7 @@
 
 A https://github.com/a-maugli account alatt létrehoztam az akt02 repository-t.
 
-Elindítottam a gitpot-ot oly módon, hogy odamásoltam a \texttt{gitpod.io} után a reporsitory URL-t:
+Elindítottam a gitpot-ot oly módon, hogy odamásoltam a `gitpod.io` után a reporsitory URL-t:
 ```
 https://gitpod.io/#https://github.com/a-maugli/akt02
 ```
