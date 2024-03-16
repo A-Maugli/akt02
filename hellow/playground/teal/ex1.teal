@@ -1,0 +1,13 @@
+#pragma version 10	// max. TEAL version on mainnet
+int 123456789		// uint8 
+int 0x1234567812345678	// uint8
+byte "Hello"		// [5]char
+byte "world"
+byte 0x123456789ABCDEF1234567 // bigint
+addr RGW4Q2Q2SKKTGZJ2XG3GTHTTTTLXO7IJAXKEMOCAFOII6DTGSHNZTMGVXI	// addres
+==	// compare 11 byte bigint with 32 byte address, expected: 0
+pop	// pop result from stack
+==	// compare "Hello" with "world", expected: 0
+pop	// pop result from stack
+==	// compare 12345678 with 0x1234567812345678, expected: 0
+

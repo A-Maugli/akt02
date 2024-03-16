@@ -1,0 +1,12 @@
+#pragma version 10
+pushint 123456789
+pushint 1311768465173141112
+pushbytes 0x48656c6c6f // "Hello"
+pushbytes 0x776f726c64 // "world"
+pushbytes 0x123456789abcdef1234567 // 0x123456789abcdef1234567
+pushbytes 0x89adc86a1a929533653ab9b6699e739cd7777d0905d44638402b908f0e6691db // addr RGW4Q2Q2SKKTGZJ2XG3GTHTTTTLXO7IJAXKEMOCAFOII6DTGSHNZTMGVXI
+==
+pop
+==
+pop
+==

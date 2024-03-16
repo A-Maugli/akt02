@@ -26,6 +26,7 @@
       "program": "build.py",
       "cwd": "${fileDirname}",
       "console": "integratedTerminal",
+      "justMyCode": false,
     }
   ]
 }
