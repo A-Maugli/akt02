@@ -44,6 +44,6 @@ def calculator_deploy() -> None:
     result = app_client.call(add, a=2, b=2)
     print(f"add result: {result.return_value}")
 
-calculator_app_spec = calculator_app.build()
-calculator_app_spec.export('./Artifacts')
+# calculator_app_spec = calculator_app.build()
+# calculator_app_spec.export('./Artifacts')
 calculator_deploy()
