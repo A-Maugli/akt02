@@ -15,5 +15,5 @@
       }
     },
     "postCreateCommand": "pipx install algokit; algokit localnet start; algokit localnet stop; sudo chown -R codespace:codespace ~/.config/algokit",
-    "postStartCommand": "algokit localnet stop"
+    "postStartCommand": "docker system prune --force"
 }
