@@ -1,21 +1,40 @@
 // src/components/Home.tsx
 import { useWallet } from '@txnlab/use-wallet'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import ConnectWallet from './components/ConnectWallet'
 import AppCalls from './components/AppCalls'
 import BizKorCreateApplication from './components/BizKorCreateApplication'
 import { BizKorClient } from './contracts/BizKorClient'
 import * as algokit from '@algorandfoundation/algokit-utils'
 import { getAlgodConfigFromViteEnvironment, getKmdConfigFromViteEnvironment } from './utils/network/getAlgoClientConfigs'
+import { stat } from 'fs'
 
 interface HomeProps { }
 
 const Home: React.FC<HomeProps> = () => {
   const [openWalletModal, setOpenWalletModal] = useState<boolean>(false)
   const [appID, setAppID] = useState<number>(0)
+  const [amount, setAmount] = useState<number>(0)
   const [openDemoModal, setOpenDemoModal] = useState<boolean>(false)
   const [appCallsDemoModal, setAppCallsDemoModal] = useState<boolean>(false)
   const { activeAddress } = useWallet()
+
+  // Get the available amount of tokens
+  const getAmount = async () => {
+    console.log('getAmount() is called')
+    try {
+      const state = await typedClient.getGlobalState()
+      setAmount(state.assetAmount!.asNumber())
+    } catch (e) {
+      console.warn(e)
+      setAmount(0)
+    }
+  }
+
+  // When the appID changes, call getAmount
+  useEffect(() => {
+    getAmount();
+  }, [appID])
 
   const toggleWalletModal = () => {
     setOpenWalletModal(!openWalletModal)
@@ -62,6 +81,8 @@ const Home: React.FC<HomeProps> = () => {
               value={appID}
               onChange={(ev) => setAppID(ev.currentTarget.valueAsNumber || 0)}>
             </input>
+
+            <h2 className="font-bold m-2">Zsetonok száma: {amount}</h2>
 
             {activeAddress && appID === 0 && (
               <BizKorCreateApplication
