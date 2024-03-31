@@ -1,0 +1,102 @@
+{
+  "name": "BizKor",
+  "desc": "",
+  "methods": [
+    {
+      "name": "initGlobalKeys",
+      "desc": "Init the values of global keys",
+      "args": [],
+      "returns": {
+        "type": "void"
+      }
+    },
+    {
+      "name": "createAssetTest",
+      "desc": "For test only, create an asset",
+      "args": [],
+      "returns": {
+        "type": "uint64"
+      }
+    },
+    {
+      "name": "optIntoAsset",
+      "desc": "Opt in to an asset for the app account",
+      "args": [
+        {
+          "name": "asset",
+          "type": "uint64",
+          "desc": "Asset to opt into"
+        }
+      ],
+      "returns": {
+        "type": "void"
+      }
+    },
+    {
+      "name": "startAssetSell",
+      "desc": "Start asset selling period",
+      "args": [
+        {
+          "name": "price",
+          "type": "uint64",
+          "desc": "asset price in /uAlgos"
+        },
+        {
+          "name": "length",
+          "type": "uint64",
+          "desc": "selling period length in secs"
+        },
+        {
+          "name": "axfer",
+          "type": "axfer",
+          "desc": "initial asset transfer to the app account"
+        }
+      ],
+      "returns": {
+        "type": "void"
+      }
+    },
+    {
+      "name": "continueAssetSell",
+      "desc": "Send assets clawed back to app account",
+      "args": [
+        {
+          "name": "axfer",
+          "type": "axfer",
+          "desc": "asset transfer to the app account"
+        }
+      ],
+      "returns": {
+        "type": "void"
+      }
+    },
+    {
+      "name": "buyAsset",
+      "desc": "Buy 1 piece of the asset",
+      "args": [
+        {
+          "name": "payment",
+          "type": "pay",
+          "desc": "in /uAlgos"
+        }
+      ],
+      "returns": {
+        "type": "void"
+      }
+    },
+    {
+      "name": "deleteApplication",
+      "args": [],
+      "returns": {
+        "type": "void"
+      }
+    },
+    {
+      "name": "createApplication",
+      "args": [],
+      "returns": {
+        "type": "void"
+      }
+    }
+  ]
+}
