@@ -3,11 +3,16 @@ import { useWallet } from '@txnlab/use-wallet'
 import React, { useState } from 'react'
 import ConnectWallet from './components/ConnectWallet'
 import AppCalls from './components/AppCalls'
+import BizKorCreateApplication from './components/BizKorCreateApplication'
+import { BizKorClient } from './contracts/BizKorClient'
+import * as algokit from '@algorandfoundation/algokit-utils'
+import { getAlgodConfigFromViteEnvironment, getKmdConfigFromViteEnvironment } from './utils/network/getAlgoClientConfigs'
 
-interface HomeProps {}
+interface HomeProps { }
 
 const Home: React.FC<HomeProps> = () => {
   const [openWalletModal, setOpenWalletModal] = useState<boolean>(false)
+  const [appID, setAppID] = useState<number>(0)
   const [openDemoModal, setOpenDemoModal] = useState<boolean>(false)
   const [appCallsDemoModal, setAppCallsDemoModal] = useState<boolean>(false)
   const { activeAddress } = useWallet()
@@ -19,6 +24,19 @@ const Home: React.FC<HomeProps> = () => {
   const toggleAppCallsModal = () => {
     setAppCallsDemoModal(!appCallsDemoModal)
   }
+
+  const algodConfig = getAlgodConfigFromViteEnvironment()
+
+  const algodClient = algokit.getAlgoClient({
+    server: algodConfig.server,
+    port: algodConfig.port,
+    token: algodConfig.token
+  })
+
+  const typedClient = new BizKorClient({
+    resolveBy: 'id',
+    id: appID
+  }, algodClient)
 
   return (
     <div className="hero min-h-screen bg-teal-400">
@@ -35,8 +53,25 @@ const Home: React.FC<HomeProps> = () => {
             <div className="divider" />
 
             <button data-test-id="connect-wallet" className="btn m-2" onClick={toggleWalletModal}>
-              Wallet Connection
+              Kapcsolódás a pénztárcához
             </button>
+
+            <h2 className="font-bold m-2">DAO app id</h2>
+            <input type="number"
+              className="input input-bordered"
+              value={appID}
+              onChange={(ev) => setAppID(ev.currentTarget.valueAsNumber || 0)}>
+            </input>
+
+            {activeAddress && appID === 0 && (
+              <BizKorCreateApplication
+                buttonClass="btn m-2"
+                buttonLoadingNode={<span className="loading loading-spinner" />}
+                buttonNode="A DAO létrehozása"  // BizKorCreateApplication, csak egyszer!
+                typedClient={typedClient}
+                setAppID={setAppID}
+              />
+            )}
 
             {activeAddress && (
               <button data-test-id="appcalls-demo" className="btn m-2" onClick={toggleAppCallsModal}>

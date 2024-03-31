@@ -51,7 +51,7 @@ export default function App() {
     <SnackbarProvider maxSnack={3}>
       <WalletProvider value={walletProviders}>
         <Home />
-      </WalletProvider>
+      </WalletProvider> 
     </SnackbarProvider>
   )
 }
