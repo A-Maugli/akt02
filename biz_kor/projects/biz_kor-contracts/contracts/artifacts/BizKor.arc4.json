@@ -11,59 +11,37 @@
       }
     },
     {
-      "name": "createAssetTest",
-      "desc": "For test only, create an asset",
-      "args": [],
+      "name": "bootstrap",
+      "desc": "boostrap, create ASA, set global key values",
+      "args": [
+        {
+          "name": "assetPrice",
+          "type": "uint64",
+          "desc": "ASA price in microAlgos"
+        },
+        {
+          "name": "assetAmount",
+          "type": "uint64",
+          "desc": "ASA inital amount"
+        },
+        {
+          "name": "sellPeriodLength",
+          "type": "uint64",
+          "desc": "sell period length in secs"
+        }
+      ],
       "returns": {
-        "type": "uint64"
+        "type": "void"
       }
     },
     {
       "name": "optIntoAsset",
-      "desc": "Opt in to an asset for the app account",
+      "desc": "Obsolete, Opt in to an asset for the app account",
       "args": [
         {
           "name": "asset",
           "type": "uint64",
           "desc": "Asset to opt into"
-        }
-      ],
-      "returns": {
-        "type": "void"
-      }
-    },
-    {
-      "name": "startAssetSell",
-      "desc": "Start asset selling period",
-      "args": [
-        {
-          "name": "price",
-          "type": "uint64",
-          "desc": "asset price in /uAlgos"
-        },
-        {
-          "name": "length",
-          "type": "uint64",
-          "desc": "selling period length in secs"
-        },
-        {
-          "name": "axfer",
-          "type": "axfer",
-          "desc": "initial asset transfer to the app account"
-        }
-      ],
-      "returns": {
-        "type": "void"
-      }
-    },
-    {
-      "name": "continueAssetSell",
-      "desc": "Send assets clawed back to app account",
-      "args": [
-        {
-          "name": "axfer",
-          "type": "axfer",
-          "desc": "asset transfer to the app account"
         }
       ],
       "returns": {
@@ -77,7 +55,7 @@
         {
           "name": "payment",
           "type": "pay",
-          "desc": "in /uAlgos"
+          "desc": "Payment in /uAlgos"
         }
       ],
       "returns": {

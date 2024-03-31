@@ -1,8 +1,10 @@
 import { Contract } from '@algorandfoundation/tealscript';
-import { makePaymentTxnWithSuggestedParams } from 'algosdk';
+// import { makePaymentTxnWithSuggestedParams } from 'algosdk';
 
 // eslint-disable-next-line no-unused-vars
 class BizKor extends Contract {
+  assetAmountInitial = GlobalStateKey<uint64>();
+
   assetAmount = GlobalStateKey<uint64>();
 
   assetPrice = GlobalStateKey<uint64>();
@@ -14,7 +16,8 @@ class BizKor extends Contract {
   /**
    * Init the values of global keys
    */
-  initGlobalKeys(): void {
+  createApplication(): void {
+    this.assetAmountInitial.value = 0;
     this.assetAmount.value = 0;
     this.assetPrice.value = 0;
     this.asset.value = AssetID.zeroIndex;
@@ -22,18 +25,39 @@ class BizKor extends Contract {
   }
 
   /**
-   * For test only, create an asset
+   * boostrap, create ASA, set global key values
+   * @param assetPrice ASA price in microAlgos
+   * @param assetAmount ASA inital amount
+   * @param sellPeriodLength sell period length in secs
    */
-  createAssetTest(): AssetID {
+  bootstrap(assetPrice: uint64, assetAmount: uint64, sellPeriodLength: uint64) {
+    /// Only allow app creator to create the asset
+    verifyAppCallTxn(this.txn, { sender: globals.creatorAddress });
+    /// Check it hasn't been done yet
+    assert(this.assetAmount.value === 0);
+
     const asset = sendAssetCreation({
-      configAssetTotal: 10,
-      configAssetName: 'teszt',
+      configAssetTotal: assetAmount,
+      configAssetDecimals: 0,
+      configAssetName: 'Bizalmi Kör Zseton',
+      configAssetUnitName: 'BKTOVJ1',
+      configAssetURL: 'https://algorand.hu/bk/bktovj.html',
+      configAssetDefaultFrozen: 0,
+      configAssetManager: globals.currentApplicationAddress,
+      configAssetReserve: globals.currentApplicationAddress,
+      configAssetFreeze: globals.currentApplicationAddress,
+      configAssetClawback: globals.currentApplicationAddress,
     });
-    return asset;
+
+    this.assetAmountInitial.value = assetAmount;
+    this.assetAmount.value = assetAmount;
+    this.assetPrice.value = assetPrice;
+    this.asset.value = asset;
+    this.sellPeriodEnd.value = globals.latestTimestamp + sellPeriodLength;
   }
 
   /**
-   * Opt in to an asset for the app account
+   * Obsolete, Opt in to an asset for the app account
    * @param asset Asset to opt into
    */
   optIntoAsset(asset: AssetID): void {
@@ -55,54 +79,8 @@ class BizKor extends Contract {
   }
 
   /**
-   * Start asset selling period
-   * @param price asset price in /uAlgos
-   * @param length selling period length in secs
-   * @param axfer initial asset transfer to the app account
-   */
-  startAssetSell(price: uint64, length: uint64, axfer: AssetTransferTxn): void {
-    /// Only allow app creator to start asset sell for the app account
-    verifyAppCallTxn(this.txn, { sender: globals.creatorAddress });
-
-    /// Ensure the asset selling period hasn't started yet
-    assert(this.sellPeriodEnd.value === 0);
-
-    /// Verify axfer is to app.address
-    verifyAssetTransferTxn(axfer, { assetReceiver: this.app.address });
-
-    /// Set global state
-    this.assetAmount.value = axfer.assetAmount;
-    this.assetPrice.value = price;
-    this.sellPeriodEnd.value = globals.latestTimestamp + length;
-  }
-
-  /**
-   * Send assets clawed back to app account
-   * @param axfer asset transfer to the app account
-   */
-  continueAssetSell(axfer: AssetTransferTxn): void {
-    // Only allow app creator to continue asset sell for the app account
-    verifyAppCallTxn(this.txn, { sender: globals.creatorAddress });
-
-    // Ensure the asset selling has already been started
-    assert(this.sellPeriodEnd.value !== 0);
-
-    // Ensure asset selling hasn't ended yet
-    assert(globals.latestTimestamp < this.sellPeriodEnd.value);
-
-    /// Verify axfer
-    verifyAssetTransferTxn(axfer, {
-      assetReceiver: this.app.address,
-      xferAsset: this.asset.value,
-    });
-
-    /// Increase asset amount
-    this.assetAmount.value = this.assetAmount.value + axfer.assetAmount;
-  }
-
-  /**
    * Buy 1 piece of the asset
-   * @param payment in /uAlgos
+   * @param payment Payment in /uAlgos
    */
   buyAsset(payment: PayTxn): void {
     /// Ensure asset selling period hasn't ended yet
@@ -111,10 +89,13 @@ class BizKor extends Contract {
     /// Verify payment transaction
     verifyPayTxn(payment, {
       sender: this.txn.sender,
+      receiver: globals.creatorAddress,
       amount: { greaterThanEqualTo: this.assetPrice.value, lessThanEqualTo: this.assetPrice.value },
+      rekeyTo: globals.zeroAddress,
+      closeRemainderTo: globals.zeroAddress,
     });
 
-    /// Check asset amount of app
+    /// Verify asset amount
     assert(this.assetAmount.value > 0);
 
     /// @todo: check asset amount in  buyer account

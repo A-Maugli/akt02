@@ -8,6 +8,7 @@ import { BizKorClient } from './contracts/BizKorClient'
 import * as algokit from '@algorandfoundation/algokit-utils'
 import { getAlgodConfigFromViteEnvironment, getKmdConfigFromViteEnvironment } from './utils/network/getAlgoClientConfigs'
 import { stat } from 'fs'
+import BizKorStartAssetSell from './components/BizKorStartAssetSell'
 
 interface HomeProps { }
 
@@ -15,6 +16,7 @@ const Home: React.FC<HomeProps> = () => {
   const [openWalletModal, setOpenWalletModal] = useState<boolean>(false)
   const [appID, setAppID] = useState<number>(0)
   const [amount, setAmount] = useState<number>(0)
+  const [price, setPrice] = useState<number>(0)
   const [openDemoModal, setOpenDemoModal] = useState<boolean>(false)
   const [appCallsDemoModal, setAppCallsDemoModal] = useState<boolean>(false)
   const { activeAddress } = useWallet()
@@ -26,14 +28,34 @@ const Home: React.FC<HomeProps> = () => {
       const state = await typedClient.getGlobalState()
       setAmount(state.assetAmount!.asNumber())
     } catch (e) {
-      console.warn(e)
+      if (e.message !== "Couldn't find global state") {
+        console.warn(e)
+      }
       setAmount(0)
+    }
+  }
+
+  // Get the price of tokens
+  const getPrice = async () => {
+    try {
+      const state = await typedClient.getGlobalState()
+      setPrice(state.assetPrice!.asNumber())
+    } catch (e) {
+      if (e.message !== "Couldn't find global state") {
+        console.warn(e)
+      }
+      setPrice(0)
     }
   }
 
   // When the appID changes, call getAmount
   useEffect(() => {
     getAmount();
+  }, [appID])
+
+  // When the appID changes, call getPrice
+  useEffect(() => {
+    getPrice();
   }, [appID])
 
   const toggleWalletModal = () => {
@@ -64,8 +86,11 @@ const Home: React.FC<HomeProps> = () => {
           <h1 className="text-4xl">
             Üdv a <div className="font-bold">Bizalmi Kör</div> DAO-jában
           </h1>
-          <p className="py-6">
+          <p className="py-2">
             Bizalmi Kör tulajdonrész opciós vételi jog értékesítés
+          </p>
+          <p className="py-2">
+            Egy zseton 0.1% tulajdonrész megvásárlását teszi lehetőve.
           </p>
 
           <div className="grid">
@@ -74,15 +99,6 @@ const Home: React.FC<HomeProps> = () => {
             <button data-test-id="connect-wallet" className="btn m-2" onClick={toggleWalletModal}>
               Kapcsolódás a pénztárcához
             </button>
-
-            <h2 className="font-bold m-2">DAO app id</h2>
-            <input type="number"
-              className="input input-bordered"
-              value={appID}
-              onChange={(ev) => setAppID(ev.currentTarget.valueAsNumber || 0)}>
-            </input>
-
-            <h2 className="font-bold m-2">Zsetonok száma: {amount}</h2>
 
             {activeAddress && appID === 0 && (
               <BizKorCreateApplication
@@ -93,6 +109,34 @@ const Home: React.FC<HomeProps> = () => {
                 setAppID={setAppID}
               />
             )}
+
+            {activeAddress && appID !== 0 && (
+              <div>
+                <h2 className="font-bold m-2">DAO app id</h2>
+                <input type="number"
+                  className="input input-bordered"
+                  value={appID}
+                  onChange={(ev) => setAppID(ev.currentTarget.valueAsNumber || 0)}>
+                </input>
+              </div>
+            )}
+
+            {activeAddress && appID !== 0 && (
+              <div>
+                <h2 className="font-bold m-2">Egy zseton ára: {price} Algo</h2>
+                <h2 className="font-bold m-2">Zsetonok száma: {amount}</h2>
+              </div>
+            )}
+
+            <BizKorStartAssetSell
+              buttonClass="btn m-2"
+              buttonLoadingNode={<span className="loading loading-spinner" />}
+              buttonNode="Call startAssetSell"
+              typedClient={typedClient}
+              price={price}
+              length={length}
+              axfer={axfer}
+            />
 
             {activeAddress && (
               <button data-test-id="appcalls-demo" className="btn m-2" onClick={toggleAppCallsModal}>

@@ -34,71 +34,152 @@ switch *call_NoOp *NOT_IMPLEMENTED *NOT_IMPLEMENTED *NOT_IMPLEMENTED *NOT_IMPLEM
 initGlobalKeys:
 	proto 0 0
 
-	// contracts/BizKor.algo.ts:18
+	// contracts/BizKor.algo.ts:20
+	// this.assetAmountInitial.value = 0
+	byte 0x6173736574416d6f756e74496e697469616c // "assetAmountInitial"
+	int 0
+	app_global_put
+
+	// contracts/BizKor.algo.ts:21
 	// this.assetAmount.value = 0
 	byte 0x6173736574416d6f756e74 // "assetAmount"
 	int 0
 	app_global_put
 
-	// contracts/BizKor.algo.ts:19
+	// contracts/BizKor.algo.ts:22
 	// this.assetPrice.value = 0
 	byte 0x61737365745072696365 // "assetPrice"
 	int 0
 	app_global_put
 
-	// contracts/BizKor.algo.ts:20
+	// contracts/BizKor.algo.ts:23
 	// this.asset.value = AssetID.zeroIndex
 	byte 0x6173736574 // "asset"
 	int 0
 	app_global_put
 
-	// contracts/BizKor.algo.ts:21
+	// contracts/BizKor.algo.ts:24
 	// this.sellPeriodEnd.value = 0
 	byte 0x73656c6c506572696f64456e64 // "sellPeriodEnd"
 	int 0
 	app_global_put
 	retsub
 
-// createAssetTest()uint64
-*abi_route_createAssetTest:
-	// The ABI return prefix
-	byte 0x151f7c75
+// bootstrap(uint64,uint64,uint64)void
+*abi_route_bootstrap:
+	// sellPeriodLength: uint64
+	txna ApplicationArgs 3
+	btoi
 
-	// execute createAssetTest()uint64
-	callsub createAssetTest
-	itob
-	concat
-	log
+	// assetAmount: uint64
+	txna ApplicationArgs 2
+	btoi
+
+	// assetPrice: uint64
+	txna ApplicationArgs 1
+	btoi
+
+	// execute bootstrap(uint64,uint64,uint64)void
+	callsub bootstrap
 	int 1
 	return
 
-// createAssetTest(): AssetID
+// bootstrap(assetPrice: uint64, assetAmount: uint64, sellPeriodLength: uint64): void
 //
-// For test only, create an asset
-createAssetTest:
-	proto 0 1
+// boostrap, create ASA, set global key values
+// @param assetPrice ASA price in microAlgos
+// @param assetAmount ASA inital amount
+// @param sellPeriodLength sell period length in secs
+bootstrap:
+	proto 3 0
 
 	// Push empty bytes after the frame pointer to reserve space for local variables
 	byte 0x
 
-	// contracts/BizKor.algo.ts:28
+	// Only allow app creator to create the asset
+	// contracts/BizKor.algo.ts:35
+	// verifyAppCallTxn(this.txn, { sender: globals.creatorAddress })
+	// verify sender
+	txn Sender
+	global CreatorAddress
+	==
+	assert
+
+	// Check it hasn't been done yet
+	// contracts/BizKor.algo.ts:37
+	// assert(this.assetAmount.value === 0)
+	byte 0x6173736574416d6f756e74 // "assetAmount"
+	app_global_get
+	int 0
+	==
+	assert
+
+	// contracts/BizKor.algo.ts:39
 	// asset = sendAssetCreation({
-	//       configAssetTotal: 10,
-	//       configAssetName: 'teszt',
+	//       configAssetTotal: assetAmount,
+	//       configAssetDecimals: 0,
+	//       configAssetName: 'Bizalmi Kör Zseton',
+	//       configAssetUnitName: 'BKTOVJ1',
+	//       configAssetURL: 'https://algorand.hu/bk/bktovj.html',
+	//       configAssetDefaultFrozen: 0,
+	//       configAssetManager: globals.currentApplicationAddress,
+	//       configAssetReserve: globals.currentApplicationAddress,
+	//       configAssetFreeze: globals.currentApplicationAddress,
+	//       configAssetClawback: globals.currentApplicationAddress,
 	//     })
 	itxn_begin
 	int acfg
 	itxn_field TypeEnum
 
-	// contracts/BizKor.algo.ts:29
-	// configAssetTotal: 10
-	int 10
+	// contracts/BizKor.algo.ts:40
+	// configAssetTotal: assetAmount
+	frame_dig -2 // assetAmount: uint64
 	itxn_field ConfigAssetTotal
 
-	// contracts/BizKor.algo.ts:30
-	// configAssetName: 'teszt'
-	byte 0x7465737a74 // "teszt"
+	// contracts/BizKor.algo.ts:41
+	// configAssetDecimals: 0
+	int 0
+	itxn_field ConfigAssetDecimals
+
+	// contracts/BizKor.algo.ts:42
+	// configAssetName: 'Bizalmi Kör Zseton'
+	byte 0x42697a616c6d69204bc3b672205a7365746f6e // "Bizalmi Kör Zseton"
 	itxn_field ConfigAssetName
+
+	// contracts/BizKor.algo.ts:43
+	// configAssetUnitName: 'BKTOVJ1'
+	byte 0x424b544f564a31 // "BKTOVJ1"
+	itxn_field ConfigAssetUnitName
+
+	// contracts/BizKor.algo.ts:44
+	// configAssetURL: 'https://algorand.hu/bk/bktovj.html'
+	byte 0x68747470733a2f2f616c676f72616e642e68752f626b2f626b746f766a2e68746d6c // "https://algorand.hu/bk/bktovj.html"
+	itxn_field ConfigAssetURL
+
+	// contracts/BizKor.algo.ts:45
+	// configAssetDefaultFrozen: 0
+	int 0
+	itxn_field ConfigAssetDefaultFrozen
+
+	// contracts/BizKor.algo.ts:46
+	// configAssetManager: globals.currentApplicationAddress
+	global CurrentApplicationAddress
+	itxn_field ConfigAssetManager
+
+	// contracts/BizKor.algo.ts:47
+	// configAssetReserve: globals.currentApplicationAddress
+	global CurrentApplicationAddress
+	itxn_field ConfigAssetReserve
+
+	// contracts/BizKor.algo.ts:48
+	// configAssetFreeze: globals.currentApplicationAddress
+	global CurrentApplicationAddress
+	itxn_field ConfigAssetFreeze
+
+	// contracts/BizKor.algo.ts:49
+	// configAssetClawback: globals.currentApplicationAddress
+	global CurrentApplicationAddress
+	itxn_field ConfigAssetClawback
 
 	// Fee field not set, defaulting to 0
 	int 0
@@ -109,12 +190,37 @@ createAssetTest:
 	itxn CreatedAssetID
 	frame_bury 0 // asset: uint64
 
-	// contracts/BizKor.algo.ts:32
-	// return asset;
-	frame_dig 0 // asset: uint64
+	// contracts/BizKor.algo.ts:52
+	// this.assetAmountInitial.value = assetAmount
+	byte 0x6173736574416d6f756e74496e697469616c // "assetAmountInitial"
+	frame_dig -2 // assetAmount: uint64
+	app_global_put
 
-	// set the subroutine return value
-	frame_bury 0
+	// contracts/BizKor.algo.ts:53
+	// this.assetAmount.value = assetAmount
+	byte 0x6173736574416d6f756e74 // "assetAmount"
+	frame_dig -2 // assetAmount: uint64
+	app_global_put
+
+	// contracts/BizKor.algo.ts:54
+	// this.assetPrice.value = assetPrice
+	byte 0x61737365745072696365 // "assetPrice"
+	frame_dig -1 // assetPrice: uint64
+	app_global_put
+
+	// contracts/BizKor.algo.ts:55
+	// this.asset.value = asset
+	byte 0x6173736574 // "asset"
+	frame_dig 0 // asset: uint64
+	app_global_put
+
+	// contracts/BizKor.algo.ts:56
+	// this.sellPeriodEnd.value = globals.latestTimestamp + sellPeriodLength
+	byte 0x73656c6c506572696f64456e64 // "sellPeriodEnd"
+	global LatestTimestamp
+	frame_dig -3 // sellPeriodLength: uint64
+	+
+	app_global_put
 	retsub
 
 // optIntoAsset(uint64)void
@@ -130,13 +236,13 @@ createAssetTest:
 
 // optIntoAsset(asset: AssetID): void
 //
-// Opt in to an asset for the app account
+// Obsolete, Opt in to an asset for the app account
 // @param asset Asset to opt into
 optIntoAsset:
 	proto 1 0
 
 	// Only allow app creator to opt the app account into asset
-	// contracts/BizKor.algo.ts:41
+	// contracts/BizKor.algo.ts:65
 	// verifyAppCallTxn(this.txn, { sender: globals.creatorAddress })
 	// verify sender
 	txn Sender
@@ -145,7 +251,7 @@ optIntoAsset:
 	assert
 
 	// Verify asset hasn't already been opted into
-	// contracts/BizKor.algo.ts:44
+	// contracts/BizKor.algo.ts:68
 	// assert(this.asset.value === AssetID.zeroIndex)
 	byte 0x6173736574 // "asset"
 	app_global_get
@@ -154,14 +260,14 @@ optIntoAsset:
 	assert
 
 	// Save asset in global state
-	// contracts/BizKor.algo.ts:47
+	// contracts/BizKor.algo.ts:71
 	// this.asset.value = asset
 	byte 0x6173736574 // "asset"
 	frame_dig -1 // asset: AssetID
 	app_global_put
 
 	// Submit opt-in transaction: 0 asset transfer to self
-	// contracts/BizKor.algo.ts:50
+	// contracts/BizKor.algo.ts:74
 	// sendAssetTransfer({
 	//       assetReceiver: this.app.address,
 	//       xferAsset: asset,
@@ -171,17 +277,17 @@ optIntoAsset:
 	int axfer
 	itxn_field TypeEnum
 
-	// contracts/BizKor.algo.ts:51
+	// contracts/BizKor.algo.ts:75
 	// assetReceiver: this.app.address
 	global CurrentApplicationAddress
 	itxn_field AssetReceiver
 
-	// contracts/BizKor.algo.ts:52
+	// contracts/BizKor.algo.ts:76
 	// xferAsset: asset
 	frame_dig -1 // asset: AssetID
 	itxn_field XferAsset
 
-	// contracts/BizKor.algo.ts:53
+	// contracts/BizKor.algo.ts:77
 	// assetAmount: 0
 	int 0
 	itxn_field AssetAmount
@@ -192,172 +298,6 @@ optIntoAsset:
 
 	// Submit inner transaction
 	itxn_submit
-	retsub
-
-// startAssetSell(uint64,uint64,axfer)void
-*abi_route_startAssetSell:
-	// axfer: axfer
-	txn GroupIndex
-	int 1
-	-
-	dup
-	gtxns TypeEnum
-	int axfer
-	==
-	assert
-
-	// length: uint64
-	txna ApplicationArgs 2
-	btoi
-
-	// price: uint64
-	txna ApplicationArgs 1
-	btoi
-
-	// execute startAssetSell(uint64,uint64,axfer)void
-	callsub startAssetSell
-	int 1
-	return
-
-// startAssetSell(price: uint64, length: uint64, axfer: AssetTransferTxn): void
-//
-// Start asset selling period
-// @param price asset price in /uAlgos
-// @param length selling period length in msec??
-// @param axfer initial asset transfer to the app account
-startAssetSell:
-	proto 3 0
-
-	// Only allow app creator to start asset sell for the app account
-	// contracts/BizKor.algo.ts:65
-	// verifyAppCallTxn(this.txn, { sender: globals.creatorAddress })
-	// verify sender
-	txn Sender
-	global CreatorAddress
-	==
-	assert
-
-	// Ensure the asset selling period hasn't started yet
-	// contracts/BizKor.algo.ts:68
-	// assert(this.sellPeriodEnd.value === 0)
-	byte 0x73656c6c506572696f64456e64 // "sellPeriodEnd"
-	app_global_get
-	int 0
-	==
-	assert
-
-	// Verify axfer is to app.address
-	// contracts/BizKor.algo.ts:71
-	// verifyAssetTransferTxn(axfer, { assetReceiver: this.app.address })
-	// verify assetReceiver
-	frame_dig -3 // axfer: AssetTransferTxn
-	gtxns AssetReceiver
-	global CurrentApplicationAddress
-	==
-	assert
-
-	// Set global state
-	// contracts/BizKor.algo.ts:74
-	// this.assetAmount.value = axfer.assetAmount
-	byte 0x6173736574416d6f756e74 // "assetAmount"
-	frame_dig -3 // axfer: AssetTransferTxn
-	gtxns AssetAmount
-	app_global_put
-
-	// contracts/BizKor.algo.ts:75
-	// this.assetPrice.value = price
-	byte 0x61737365745072696365 // "assetPrice"
-	frame_dig -1 // price: uint64
-	app_global_put
-
-	// contracts/BizKor.algo.ts:76
-	// this.sellPeriodEnd.value = globals.latestTimestamp + length
-	byte 0x73656c6c506572696f64456e64 // "sellPeriodEnd"
-	global LatestTimestamp
-	frame_dig -2 // length: uint64
-	+
-	app_global_put
-	retsub
-
-// continueAssetSell(axfer)void
-*abi_route_continueAssetSell:
-	// axfer: axfer
-	txn GroupIndex
-	int 1
-	-
-	dup
-	gtxns TypeEnum
-	int axfer
-	==
-	assert
-
-	// execute continueAssetSell(axfer)void
-	callsub continueAssetSell
-	int 1
-	return
-
-// continueAssetSell(axfer: AssetTransferTxn): void
-//
-// Send assets clawed back to app account
-// @param axfer asset transfer to the app account
-continueAssetSell:
-	proto 1 0
-
-	// contracts/BizKor.algo.ts:85
-	// verifyAppCallTxn(this.txn, { sender: globals.creatorAddress })
-	// verify sender
-	txn Sender
-	global CreatorAddress
-	==
-	assert
-
-	// contracts/BizKor.algo.ts:88
-	// assert(this.sellPeriodEnd.value !== 0)
-	byte 0x73656c6c506572696f64456e64 // "sellPeriodEnd"
-	app_global_get
-	int 0
-	!=
-	assert
-
-	// contracts/BizKor.algo.ts:91
-	// assert(globals.latestTimestamp < this.sellPeriodEnd.value)
-	global LatestTimestamp
-	byte 0x73656c6c506572696f64456e64 // "sellPeriodEnd"
-	app_global_get
-	<
-	assert
-
-	// Verify axfer
-	// contracts/BizKor.algo.ts:94
-	// verifyAssetTransferTxn(axfer, {
-	//       assetReceiver: this.app.address,
-	//       xferAsset: this.asset.value,
-	//     })
-	// verify assetReceiver
-	frame_dig -1 // axfer: AssetTransferTxn
-	gtxns AssetReceiver
-	global CurrentApplicationAddress
-	==
-	assert
-
-	// verify xferAsset
-	frame_dig -1 // axfer: AssetTransferTxn
-	gtxns XferAsset
-	byte 0x6173736574 // "asset"
-	app_global_get
-	==
-	assert
-
-	// Increase asset amount
-	// contracts/BizKor.algo.ts:100
-	// this.assetAmount.value = this.assetAmount.value + axfer.assetAmount
-	byte 0x6173736574416d6f756e74 // "assetAmount"
-	dup
-	app_global_get
-	frame_dig -1 // axfer: AssetTransferTxn
-	gtxns AssetAmount
-	+
-	app_global_put
 	retsub
 
 // buyAsset(pay)void
@@ -380,12 +320,12 @@ continueAssetSell:
 // buyAsset(payment: PayTxn): void
 //
 // Buy 1 piece of the asset
-// @param payment in /uAlgos
+// @param payment Payment in /uAlgos
 buyAsset:
 	proto 1 0
 
 	// Ensure asset selling period hasn't ended yet
-	// contracts/BizKor.algo.ts:109
+	// contracts/BizKor.algo.ts:87
 	// assert(globals.latestTimestamp < this.sellPeriodEnd.value)
 	global LatestTimestamp
 	byte 0x73656c6c506572696f64456e64 // "sellPeriodEnd"
@@ -394,15 +334,25 @@ buyAsset:
 	assert
 
 	// Verify payment transaction
-	// contracts/BizKor.algo.ts:112
+	// contracts/BizKor.algo.ts:90
 	// verifyPayTxn(payment, {
 	//       sender: this.txn.sender,
+	//       receiver: globals.creatorAddress,
 	//       amount: { greaterThanEqualTo: this.assetPrice.value, lessThanEqualTo: this.assetPrice.value },
+	//       rekeyTo: globals.zeroAddress,
+	//       closeRemainderTo: globals.zeroAddress,
 	//     })
 	// verify sender
 	frame_dig -1 // payment: PayTxn
 	gtxns Sender
 	txn Sender
+	==
+	assert
+
+	// verify receiver
+	frame_dig -1 // payment: PayTxn
+	gtxns Receiver
+	global CreatorAddress
 	==
 	assert
 
@@ -420,8 +370,22 @@ buyAsset:
 	<=
 	assert
 
-	// Check asset amount of app
-	// contracts/BizKor.algo.ts:118
+	// verify rekeyTo
+	frame_dig -1 // payment: PayTxn
+	gtxns RekeyTo
+	global ZeroAddress
+	==
+	assert
+
+	// verify closeRemainderTo
+	frame_dig -1 // payment: PayTxn
+	gtxns CloseRemainderTo
+	global ZeroAddress
+	==
+	assert
+
+	// Verify asset amount
+	// contracts/BizKor.algo.ts:99
 	// assert(this.assetAmount.value > 0)
 	byte 0x6173736574416d6f756e74 // "assetAmount"
 	app_global_get
@@ -431,7 +395,7 @@ buyAsset:
 
 	// @todo: check asset amount in  buyer account
 	// Send asset to payer
-	// contracts/BizKor.algo.ts:123
+	// contracts/BizKor.algo.ts:104
 	// sendAssetTransfer({
 	//       assetReceiver: this.txn.sender,
 	//       xferAsset: this.asset.value,
@@ -441,18 +405,18 @@ buyAsset:
 	int axfer
 	itxn_field TypeEnum
 
-	// contracts/BizKor.algo.ts:124
+	// contracts/BizKor.algo.ts:105
 	// assetReceiver: this.txn.sender
 	txn Sender
 	itxn_field AssetReceiver
 
-	// contracts/BizKor.algo.ts:125
+	// contracts/BizKor.algo.ts:106
 	// xferAsset: this.asset.value
 	byte 0x6173736574 // "asset"
 	app_global_get
 	itxn_field XferAsset
 
-	// contracts/BizKor.algo.ts:126
+	// contracts/BizKor.algo.ts:107
 	// assetAmount: 1
 	int 1
 	itxn_field AssetAmount
@@ -464,7 +428,7 @@ buyAsset:
 	// Submit inner transaction
 	itxn_submit
 
-	// contracts/BizKor.algo.ts:130
+	// contracts/BizKor.algo.ts:111
 	// this.assetAmount.value = this.assetAmount.value - 1
 	byte 0x6173736574416d6f756e74 // "assetAmount"
 	dup
@@ -486,7 +450,7 @@ deleteApplication:
 	proto 0 0
 
 	// Only allow app creator to delete the app account
-	// contracts/BizKor.algo.ts:135
+	// contracts/BizKor.algo.ts:116
 	// verifyAppCallTxn(this.txn, { sender: globals.creatorAddress })
 	// verify sender
 	txn Sender
@@ -495,7 +459,7 @@ deleteApplication:
 	assert
 
 	// Send back assets to app creator account
-	// contracts/BizKor.algo.ts:138
+	// contracts/BizKor.algo.ts:119
 	// sendAssetTransfer({
 	//       assetReceiver: globals.creatorAddress,
 	//       xferAsset: this.asset.value,
@@ -506,23 +470,23 @@ deleteApplication:
 	int axfer
 	itxn_field TypeEnum
 
-	// contracts/BizKor.algo.ts:139
+	// contracts/BizKor.algo.ts:120
 	// assetReceiver: globals.creatorAddress
 	global CreatorAddress
 	itxn_field AssetReceiver
 
-	// contracts/BizKor.algo.ts:140
+	// contracts/BizKor.algo.ts:121
 	// xferAsset: this.asset.value
 	byte 0x6173736574 // "asset"
 	app_global_get
 	itxn_field XferAsset
 
-	// contracts/BizKor.algo.ts:141
+	// contracts/BizKor.algo.ts:122
 	// assetAmount: 0
 	int 0
 	itxn_field AssetAmount
 
-	// contracts/BizKor.algo.ts:142
+	// contracts/BizKor.algo.ts:123
 	// assetCloseTo: globals.creatorAddress
 	global CreatorAddress
 	itxn_field AssetCloseTo
@@ -535,7 +499,7 @@ deleteApplication:
 	itxn_submit
 
 	// Send back Algos to app creator account
-	// contracts/BizKor.algo.ts:146
+	// contracts/BizKor.algo.ts:127
 	// sendPayment({
 	//       receiver: globals.creatorAddress,
 	//       amount: 0,
@@ -545,17 +509,17 @@ deleteApplication:
 	int pay
 	itxn_field TypeEnum
 
-	// contracts/BizKor.algo.ts:147
+	// contracts/BizKor.algo.ts:128
 	// receiver: globals.creatorAddress
 	global CreatorAddress
 	itxn_field Receiver
 
-	// contracts/BizKor.algo.ts:148
+	// contracts/BizKor.algo.ts:129
 	// amount: 0
 	int 0
 	itxn_field Amount
 
-	// contracts/BizKor.algo.ts:149
+	// contracts/BizKor.algo.ts:130
 	// closeRemainderTo: globals.creatorAddress
 	global CreatorAddress
 	itxn_field CloseRemainderTo
@@ -580,13 +544,11 @@ deleteApplication:
 
 *call_NoOp:
 	method "initGlobalKeys()void"
-	method "createAssetTest()uint64"
+	method "bootstrap(uint64,uint64,uint64)void"
 	method "optIntoAsset(uint64)void"
-	method "startAssetSell(uint64,uint64,axfer)void"
-	method "continueAssetSell(axfer)void"
 	method "buyAsset(pay)void"
 	txna ApplicationArgs 0
-	match *abi_route_initGlobalKeys *abi_route_createAssetTest *abi_route_optIntoAsset *abi_route_startAssetSell *abi_route_continueAssetSell *abi_route_buyAsset
+	match *abi_route_initGlobalKeys *abi_route_bootstrap *abi_route_optIntoAsset *abi_route_buyAsset
 	err
 
 *call_DeleteApplication:
