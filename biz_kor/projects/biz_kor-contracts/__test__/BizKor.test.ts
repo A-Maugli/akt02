@@ -3,10 +3,8 @@ import { describe, test, expect, beforeAll, beforeEach } from '@jest/globals';
 import { algorandFixture, getTestAccount } from '@algorandfoundation/algokit-utils/testing';
 import * as algokit from '@algorandfoundation/algokit-utils';
 import algosdk, { Transaction } from 'algosdk';
-import AlgodClient from 'algosdk/dist/types/client/v2/algod/algod';
-import SuggestedParamsRequest from 'algosdk/dist/types/client/v2/algod/suggestedParams';
-import { BizKorClient } from '../contracts/clients/BizKorClient';
 import { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account';
+import { BizKorClient } from '../contracts/clients/BizKorClient';
 
 const fixture = algorandFixture();
 algokit.Config.configure({ populateAppCallResources: true });
@@ -52,7 +50,11 @@ describe('BizKor', () => {
 
     await appClient.create.createApplication({});
     // console.log('app create tx:', tx);
+    console.log('beforeAll, testAccount.addr: ', testAccount.addr);
+    const appRef = await appClient.appClient.getAppReference();
+    console.log('beforeAll, appRef.appAddress: ', appRef.appAddress);
   });
+
   test('bootstrap', async () => {
     await appClient.appClient.fundAppAccount(algokit.microAlgos(400_000));
     const assetPrice = 1_000_000;
@@ -63,6 +65,10 @@ describe('BizKor', () => {
       { assetPrice, assetAmount, sellPeriodLength },
       { sendParams: { fee: algokit.microAlgos(2_000) } }
     );
+    const globalState = await appClient.getGlobalState();
+    expect(globalState.assetAmountInitial?.asNumber()).toBe(assetAmount);
+    expect(globalState.assetAmount?.asNumber()).toBe(assetAmount);
+    expect(globalState.assetPrice?.asNumber()).toBe(assetPrice);
   });
 
   test('getGlobalState', async () => {
@@ -73,11 +79,11 @@ describe('BizKor', () => {
     const asset = globalState.asset?.asNumber();
     const sellPeriodEnd = globalState.sellPeriodEnd?.asNumber();
     // console.log('globalState:', globalState);
-    console.log('globalState assetAmountInitial:', assetAmountInitial);
-    console.log('globalState assetAmount:', assetAmount);
-    console.log('globalState assetPrice:', assetPrice);
-    console.log('globalState asset:', asset);
-    console.log('globalState sellPeriodEnd:', sellPeriodEnd);
+    console.log('getGlobalState assetAmountInitial:', assetAmountInitial);
+    console.log('getGlobalState assetAmount:', assetAmount);
+    console.log('getGlobalState assetPrice:', assetPrice);
+    console.log('getGlobalState asset:', asset);
+    console.log('getGlobalState sellPeriodEnd:', sellPeriodEnd);
   });
   test('buyAsset', async () => {
     const { algod, testAccount } = fixture.context;
@@ -100,6 +106,10 @@ describe('BizKor', () => {
     await algosdk.waitForConfirmation(algod, txn2.txId, 4);
 
     // Make a payment tx, to buy asset
+    const appRef = await appClient.appClient.getAppReference();
+    // expect(testAccount.addr).toBe(appRef.appAddress);
+    console.log('testAccount.addr ', testAccount.addr);
+    console.log('appRef.appAddress ', appRef.appAddress);
     const tx1 = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
       from: sender1.addr,
       to: testAccount.addr,
@@ -111,6 +121,7 @@ describe('BizKor', () => {
     const compose = appClient.compose().buyAsset(
       {
         payment: tx1,
+        ASAid: asset,
       },
       {
         sender: signer1,
@@ -127,11 +138,16 @@ describe('BizKor', () => {
       Array.from(Array(txs.length), (_, i) => i)
     );
     const { txId } = await algod.sendRawTransaction(signed).do();
-    console.log('txId:', txId);
+    console.log('buyAsset txId:', txId);
   });
   test.skip('deleteApplication', async () => {
+    const globalState = await appClient.getGlobalState();
+    const asset = globalState.asset!.asNumber();
     // fee must be 3000 /uAlgos, due to the inner transaction
-    const tx = await appClient.delete.deleteApplication({}, { sendParams: { fee: algokit.microAlgos(3_000) } });
+    const tx = await appClient.delete.deleteApplication(
+      { ASAid: asset },
+      { sendParams: { fee: algokit.microAlgos(3_000) } }
+    );
     console.log('deleteApplication, tx:', tx);
   });
 });

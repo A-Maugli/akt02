@@ -56,6 +56,11 @@
           "name": "payment",
           "type": "pay",
           "desc": "Payment in /uAlgos"
+        },
+        {
+          "name": "ASAid",
+          "type": "uint64",
+          "desc": "reference to ASA, (!)"
         }
       ],
       "returns": {
@@ -64,7 +69,14 @@
     },
     {
       "name": "deleteApplication",
-      "args": [],
+      "desc": "Delete app with ABI method",
+      "args": [
+        {
+          "name": "ASAid",
+          "type": "uint64",
+          "desc": "reference to ASA, (!)"
+        }
+      ],
       "returns": {
         "type": "void"
       }

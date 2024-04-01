@@ -81,16 +81,18 @@ class BizKor extends Contract {
   /**
    * Buy 1 piece of the asset
    * @param payment Payment in /uAlgos
+   * @param ASAid reference to ASA, (!)
    */
-  buyAsset(payment: PayTxn): void {
+  // eslint-disable-next-line no-unused-vars
+  buyAsset(payment: PayTxn, ASAid: AssetID): void {
     /// Ensure asset selling period hasn't ended yet
     assert(globals.latestTimestamp < this.sellPeriodEnd.value);
 
     /// Verify payment transaction
     verifyPayTxn(payment, {
       sender: this.txn.sender,
-      // receiver: globals.creatorAddress,
-      // amount: { greaterThanEqualTo: this.assetPrice.value, lessThanEqualTo: this.assetPrice.value },
+      receiver: globals.creatorAddress,
+      amount: { greaterThanEqualTo: this.assetPrice.value, lessThanEqualTo: this.assetPrice.value },
       rekeyTo: globals.zeroAddress,
       closeRemainderTo: globals.zeroAddress,
     });
@@ -111,7 +113,12 @@ class BizKor extends Contract {
     this.assetAmount.value = this.assetAmount.value - 1;
   }
 
-  deleteApplication(): void {
+  /**
+   * Delete app with ABI method
+   * @param ASAid reference to ASA, (!)
+   */
+  // eslint-disable-next-line no-unused-vars
+  deleteApplication(ASAid: AssetID): void {
     /// Only allow app creator to delete the app account
     verifyAppCallTxn(this.txn, { sender: globals.creatorAddress });
 
