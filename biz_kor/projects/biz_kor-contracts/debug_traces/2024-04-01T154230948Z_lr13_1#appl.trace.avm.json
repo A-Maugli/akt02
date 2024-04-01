@@ -1,0 +1,249 @@
+{
+  "last-round": 13,
+  "txn-groups": [
+    {
+      "txn-results": [
+        {
+          "txn-result": {
+            "pool-error": "",
+            "txn": {
+              "txn": {
+                "apaa": [
+                  "JIfDLA=="
+                ],
+                "apan": 5,
+                "apid": 1005,
+                "fee": 3000,
+                "fv": 13,
+                "gen": "dockernet-v1",
+                "gh": "vL2kMac6taGxJ3yDkwQc75q/eTtCEi3d3JZmxjL2R38=",
+                "lv": 1013,
+                "snd": "9FZBMkiJrZbfKPEshjdL2j6ywkxU7sSnI0jMogA4tuk=",
+                "type": "appl"
+              }
+            }
+          },
+          "app-budget-consumed": 26,
+          "exec-trace": {
+            "approval-program-hash": "29Hpht1lreJRFIZwul+vtAdH7KOKW79g3AkoaDKzptg=",
+            "approval-program-trace": [
+              {
+                "pc": 1
+              },
+              {
+                "pc": 6
+              },
+              {
+                "pc": 70,
+                "stack-additions": [
+                  {
+                    "type": 2,
+                    "uint": 1005
+                  }
+                ]
+              },
+              {
+                "pc": 72,
+                "stack-additions": [
+                  {
+                    "type": 2
+                  }
+                ],
+                "stack-pop-count": 1
+              },
+              {
+                "pc": 73,
+                "stack-additions": [
+                  {
+                    "type": 2,
+                    "uint": 6
+                  }
+                ]
+              },
+              {
+                "pc": 75,
+                "stack-additions": [
+                  {
+                    "type": 2
+                  }
+                ],
+                "stack-pop-count": 2
+              },
+              {
+                "pc": 76,
+                "stack-additions": [
+                  {
+                    "type": 2,
+                    "uint": 5
+                  }
+                ]
+              },
+              {
+                "pc": 78,
+                "stack-additions": [
+                  {
+                    "type": 2,
+                    "uint": 5
+                  }
+                ],
+                "stack-pop-count": 2
+              },
+              {
+                "pc": 79,
+                "stack-pop-count": 1
+              },
+              {
+                "pc": 551,
+                "stack-additions": [
+                  {
+                    "type": 1,
+                    "bytes": "JIfDLA=="
+                  }
+                ]
+              },
+              {
+                "pc": 557,
+                "stack-additions": [
+                  {
+                    "type": 1,
+                    "bytes": "JIfDLA=="
+                  }
+                ]
+              },
+              {
+                "pc": 560,
+                "stack-pop-count": 2
+              },
+              {
+                "pc": 450
+              },
+              {
+                "pc": 455
+              },
+              {
+                "pc": 458,
+                "stack-additions": [
+                  {
+                    "type": 1,
+                    "bytes": "9FZBMkiJrZbfKPEshjdL2j6ywkxU7sSnI0jMogA4tuk="
+                  }
+                ]
+              },
+              {
+                "pc": 460,
+                "stack-additions": [
+                  {
+                    "type": 1,
+                    "bytes": "9FZBMkiJrZbfKPEshjdL2j6ywkxU7sSnI0jMogA4tuk="
+                  }
+                ]
+              },
+              {
+                "pc": 462,
+                "stack-additions": [
+                  {
+                    "type": 2,
+                    "uint": 1
+                  }
+                ],
+                "stack-pop-count": 2
+              },
+              {
+                "pc": 463,
+                "stack-pop-count": 1
+              },
+              {
+                "pc": 464
+              },
+              {
+                "pc": 465,
+                "stack-additions": [
+                  {
+                    "type": 2,
+                    "uint": 4
+                  }
+                ]
+              },
+              {
+                "pc": 466,
+                "stack-pop-count": 1
+              },
+              {
+                "pc": 468,
+                "stack-additions": [
+                  {
+                    "type": 1,
+                    "bytes": "9FZBMkiJrZbfKPEshjdL2j6ywkxU7sSnI0jMogA4tuk="
+                  }
+                ]
+              },
+              {
+                "pc": 470,
+                "stack-pop-count": 1
+              },
+              {
+                "pc": 472,
+                "stack-additions": [
+                  {
+                    "type": 1,
+                    "bytes": "YXNzZXQ="
+                  }
+                ]
+              },
+              {
+                "pc": 473,
+                "stack-additions": [
+                  {
+                    "type": 2,
+                    "uint": 1009
+                  }
+                ],
+                "stack-pop-count": 1
+              },
+              {
+                "pc": 474,
+                "stack-pop-count": 1
+              }
+            ]
+          }
+        }
+      ],
+      "app-budget-added": 700,
+      "app-budget-consumed": 26,
+      "failed-at": [
+        0
+      ],
+      "failure-message": "transaction OOSDJDCOTQIDPEEF755CS5EQEYH6T2NN2HQPCJFUE3NLRDDURXEQ: logic eval error: unavailable Asset 1009. Details: app=1005, pc=474, opcodes=bytec_0 // \"asset\"; app_global_get; itxn_field XferAsset"
+    }
+  ],
+  "version": 2,
+  "eval-overrides": {
+    "allow-empty-signatures": true,
+    "max-log-calls": 2048,
+    "max-log-size": 65536
+  },
+  "exec-trace-config": {
+    "enable": true,
+    "scratch-change": true,
+    "stack-change": true,
+    "state-change": true
+  },
+  "initial-states": {
+    "app-initial-states": [
+      {
+        "id": 1005,
+        "app-globals": {
+          "kvs": [
+            {
+              "key": "YXNzZXQ=",
+              "value": {
+                "type": 2,
+                "uint": 1009
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

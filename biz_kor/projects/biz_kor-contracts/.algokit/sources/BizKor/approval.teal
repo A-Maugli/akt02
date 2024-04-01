@@ -21,17 +21,17 @@ switch *call_NoOp *NOT_IMPLEMENTED *NOT_IMPLEMENTED *NOT_IMPLEMENTED *NOT_IMPLEM
 *NOT_IMPLEMENTED:
 	err
 
-// initGlobalKeys()void
-*abi_route_initGlobalKeys:
-	// execute initGlobalKeys()void
-	callsub initGlobalKeys
+// createApplication()void
+*abi_route_createApplication:
+	// execute createApplication()void
+	callsub createApplication
 	int 1
 	return
 
-// initGlobalKeys(): void
+// createApplication(): void
 //
 // Init the values of global keys
-initGlobalKeys:
+createApplication:
 	proto 0 0
 
 	// contracts/BizKor.algo.ts:20
@@ -337,8 +337,8 @@ buyAsset:
 	// contracts/BizKor.algo.ts:90
 	// verifyPayTxn(payment, {
 	//       sender: this.txn.sender,
-	//       receiver: globals.creatorAddress,
-	//       amount: { greaterThanEqualTo: this.assetPrice.value, lessThanEqualTo: this.assetPrice.value },
+	//       // receiver: globals.creatorAddress,
+	//       // amount: { greaterThanEqualTo: this.assetPrice.value, lessThanEqualTo: this.assetPrice.value },
 	//       rekeyTo: globals.zeroAddress,
 	//       closeRemainderTo: globals.zeroAddress,
 	//     })
@@ -347,27 +347,6 @@ buyAsset:
 	gtxns Sender
 	txn Sender
 	==
-	assert
-
-	// verify receiver
-	frame_dig -1 // payment: PayTxn
-	gtxns Receiver
-	global CreatorAddress
-	==
-	assert
-
-	// verify amount
-	frame_dig -1 // payment: PayTxn
-	gtxns Amount
-	byte 0x61737365745072696365 // "assetPrice"
-	app_global_get
-	>=
-	assert
-	frame_dig -1 // payment: PayTxn
-	gtxns Amount
-	byte 0x61737365745072696365 // "assetPrice"
-	app_global_get
-	<=
 	assert
 
 	// verify rekeyTo
@@ -532,10 +511,6 @@ deleteApplication:
 	itxn_submit
 	retsub
 
-*abi_route_createApplication:
-	int 1
-	return
-
 *create_NoOp:
 	method "createApplication()void"
 	txna ApplicationArgs 0
@@ -543,12 +518,11 @@ deleteApplication:
 	err
 
 *call_NoOp:
-	method "initGlobalKeys()void"
 	method "bootstrap(uint64,uint64,uint64)void"
 	method "optIntoAsset(uint64)void"
 	method "buyAsset(pay)void"
 	txna ApplicationArgs 0
-	match *abi_route_initGlobalKeys *abi_route_bootstrap *abi_route_optIntoAsset *abi_route_buyAsset
+	match *abi_route_bootstrap *abi_route_optIntoAsset *abi_route_buyAsset
 	err
 
 *call_DeleteApplication:

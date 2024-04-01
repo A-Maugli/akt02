@@ -3,7 +3,7 @@
   "desc": "",
   "methods": [
     {
-      "name": "initGlobalKeys",
+      "name": "createApplication",
       "desc": "Init the values of global keys",
       "args": [],
       "returns": {
@@ -64,13 +64,6 @@
     },
     {
       "name": "deleteApplication",
-      "args": [],
-      "returns": {
-        "type": "void"
-      }
-    },
-    {
-      "name": "createApplication",
       "args": [],
       "returns": {
         "type": "void"

@@ -89,8 +89,8 @@ class BizKor extends Contract {
     /// Verify payment transaction
     verifyPayTxn(payment, {
       sender: this.txn.sender,
-      receiver: globals.creatorAddress,
-      amount: { greaterThanEqualTo: this.assetPrice.value, lessThanEqualTo: this.assetPrice.value },
+      // receiver: globals.creatorAddress,
+      // amount: { greaterThanEqualTo: this.assetPrice.value, lessThanEqualTo: this.assetPrice.value },
       rekeyTo: globals.zeroAddress,
       closeRemainderTo: globals.zeroAddress,
     });

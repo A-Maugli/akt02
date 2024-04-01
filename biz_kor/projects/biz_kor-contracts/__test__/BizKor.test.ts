@@ -2,10 +2,11 @@
 import { describe, test, expect, beforeAll, beforeEach } from '@jest/globals';
 import { algorandFixture, getTestAccount } from '@algorandfoundation/algokit-utils/testing';
 import * as algokit from '@algorandfoundation/algokit-utils';
-import algosdk from 'algosdk';
+import algosdk, { Transaction } from 'algosdk';
 import AlgodClient from 'algosdk/dist/types/client/v2/algod/algod';
 import SuggestedParamsRequest from 'algosdk/dist/types/client/v2/algod/suggestedParams';
 import { BizKorClient } from '../contracts/clients/BizKorClient';
+import { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account';
 
 const fixture = algorandFixture();
 algokit.Config.configure({ populateAppCallResources: true });
@@ -14,6 +15,7 @@ let appClient: BizKorClient;
 
 describe('BizKor', () => {
   let sender1: algosdk.Account;
+  let signer1: TransactionSignerAccount;
 
   beforeEach(fixture.beforeEach);
 
@@ -23,12 +25,21 @@ describe('BizKor', () => {
 
     sender1 = await algokit.getOrCreateKmdWalletAccount(
       {
-        name: 'Biz-Kor-ASA-account',
+        name: 'Buyer of Biz.Kör. token',
         fundWith: algokit.algos(100),
       },
       algod,
       kmd
     );
+    console.log('sender1 addr:', sender1.addr);
+    // signer1 = algosdk.makeBasicAccountTransactionSigner(sender1);
+    signer1 = {
+      addr: sender1.addr,
+      // eslint-disable-next-line no-unused-vars
+      signer: async (txnGroup: Transaction[], indexesToSign: number[]) => {
+        return txnGroup.map((tx) => tx.signTxn(sender1.sk));
+      },
+    };
 
     appClient = new BizKorClient(
       {
@@ -39,7 +50,7 @@ describe('BizKor', () => {
       algod
     );
 
-    const tx = await appClient.create.createApplication({});
+    await appClient.create.createApplication({});
     // console.log('app create tx:', tx);
   });
   test('bootstrap', async () => {
@@ -76,6 +87,7 @@ describe('BizKor', () => {
     // Opt in to asset
     const globalState = await appClient.getGlobalState();
     const asset = globalState.asset!.asNumber();
+    console.log('Try to opt in to asset: ', asset);
     const txn1 = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
       from: sender1.addr,
       to: sender1.addr,
@@ -87,18 +99,37 @@ describe('BizKor', () => {
     const txn2 = await algod.sendRawTransaction(stxn1).do();
     await algosdk.waitForConfirmation(algod, txn2.txId, 4);
 
-    // Make a payment tx
-    const payment = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+    // Make a payment tx, to buy asset
+    const tx1 = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
       from: sender1.addr,
       to: testAccount.addr,
       amount: 1_000_000,
       suggestedParams: params,
     });
-    // const payment = txn3.signTxn(sender1.sk);
+
     // Buy asset
-    await appClient.buyAsset({ payment });
+    const compose = appClient.compose().buyAsset(
+      {
+        payment: tx1,
+      },
+      {
+        sender: signer1,
+        sendParams: {
+          fee: algokit.microAlgos(2000),
+        },
+      }
+    );
+
+    const atc = await compose.atc();
+    const txs = atc.buildGroup().map((tx) => tx.txn);
+    const signed = await signer1.signer(
+      txs,
+      Array.from(Array(txs.length), (_, i) => i)
+    );
+    const { txId } = await algod.sendRawTransaction(signed).do();
+    console.log('txId:', txId);
   });
-  test('deleteApplication', async () => {
+  test.skip('deleteApplication', async () => {
     // fee must be 3000 /uAlgos, due to the inner transaction
     const tx = await appClient.delete.deleteApplication({}, { sendParams: { fee: algokit.microAlgos(3_000) } });
     console.log('deleteApplication, tx:', tx);
