@@ -12,8 +12,10 @@ algokit.Config.configure({ populateAppCallResources: true });
 let appClient: BizKorClient;
 
 describe('BizKor', () => {
-  let sender1: algosdk.Account;
+  let acc1: algosdk.Account;
   let signer1: TransactionSignerAccount;
+  let acc2: algosdk.Account;
+  let signer2: TransactionSignerAccount;
 
   beforeEach(fixture.beforeEach);
 
@@ -21,7 +23,7 @@ describe('BizKor', () => {
     await fixture.beforeEach();
     const { algod, testAccount, kmd } = fixture.context;
 
-    sender1 = await algokit.getOrCreateKmdWalletAccount(
+    acc1 = await algokit.getOrCreateKmdWalletAccount(
       {
         name: 'Buyer of Biz.Kör. token',
         fundWith: algokit.algos(100),
@@ -29,19 +31,37 @@ describe('BizKor', () => {
       algod,
       kmd
     );
-    console.log('sender1 addr:', sender1.addr);
+    console.log('acc1.addr (token buyer):', acc1.addr);
     // signer1 = algosdk.makeBasicAccountTransactionSigner(sender1);
     signer1 = {
-      addr: sender1.addr,
+      addr: acc1.addr,
       // eslint-disable-next-line no-unused-vars
       signer: async (txnGroup: Transaction[], indexesToSign: number[]) => {
-        return txnGroup.map((tx) => tx.signTxn(sender1.sk));
+        return txnGroup.map((tx) => tx.signTxn(acc1.sk));
+      },
+    };
+
+    acc2 = await algokit.getOrCreateKmdWalletAccount(
+      {
+        name: 'App creator',
+        fundWith: algokit.algos(100),
+      },
+      algod,
+      kmd
+    );
+    console.log('acc2.addr (app creator):', acc2.addr);
+    // signer1 = algosdk.makeBasicAccountTransactionSigner(sender1);
+    signer2 = {
+      addr: acc2.addr,
+      // eslint-disable-next-line no-unused-vars
+      signer: async (txnGroup: Transaction[], indexesToSign: number[]) => {
+        return txnGroup.map((tx) => tx.signTxn(acc2.sk));
       },
     };
 
     appClient = new BizKorClient(
       {
-        sender: testAccount,
+        sender: acc2,
         resolveBy: 'id',
         id: 0,
       },
@@ -49,10 +69,6 @@ describe('BizKor', () => {
     );
 
     await appClient.create.createApplication({});
-    // console.log('app create tx:', tx);
-    console.log('beforeAll, testAccount.addr: ', testAccount.addr);
-    const appRef = await appClient.appClient.getAppReference();
-    console.log('beforeAll, appRef.appAddress: ', appRef.appAddress);
   });
 
   test('bootstrap', async () => {
@@ -93,26 +109,27 @@ describe('BizKor', () => {
     // Opt in to asset
     const globalState = await appClient.getGlobalState();
     const asset = globalState.asset!.asNumber();
-    console.log('Try to opt in to asset: ', asset);
+    console.log('Try to opt in to asset: ', asset, testAccount.addr);
     const txn1 = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
-      from: sender1.addr,
-      to: sender1.addr,
+      from: acc1.addr,
+      to: acc1.addr,
       amount: 0,
       assetIndex: asset,
       suggestedParams: params,
     });
-    const stxn1 = txn1.signTxn(sender1.sk);
+    const stxn1 = txn1.signTxn(acc1.sk);
     const txn2 = await algod.sendRawTransaction(stxn1).do();
     await algosdk.waitForConfirmation(algod, txn2.txId, 4);
 
     // Make a payment tx, to buy asset
     const appRef = await appClient.appClient.getAppReference();
-    // expect(testAccount.addr).toBe(appRef.appAddress);
-    console.log('testAccount.addr ', testAccount.addr);
-    console.log('appRef.appAddress ', appRef.appAddress);
+    // const appAddres = await algosdk.getApplicationAddress(appRef.appId);
+    console.log('buyAsset: testAccount.addr ', testAccount.addr);
+    console.log('buyAsset: appRef.appAddress ', appRef.appAddress);
+    console.log('buyAsset: appCreatorAddr ', acc2.addr);
     const tx1 = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-      from: sender1.addr,
-      to: testAccount.addr,
+      from: acc1.addr,
+      to: acc2.addr,
       amount: 1_000_000,
       suggestedParams: params,
     });
