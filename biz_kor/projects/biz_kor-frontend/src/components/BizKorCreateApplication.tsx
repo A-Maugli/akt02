@@ -2,7 +2,6 @@
 import { ReactNode, useState } from 'react'
 import { BizKor, BizKorClient } from '../contracts/BizKorClient'
 import { useWallet } from '@txnlab/use-wallet'
-import { getAlgoKmdClient } from '@algorandfoundation/algokit-utils'
 import * as algokit from '@algorandfoundation/algokit-utils'
 
 /* Example usage
@@ -31,11 +30,15 @@ const BizKorCreateApplication = (props: Props) => {
     console.log(`Calling createApplication`)
     await props.typedClient.create.createApplication(
       {},
-      { sender },
+      { sender: sender },
     )
-    
-    await props.typedClient.appClient.fundAppAccount({sender, amount: algokit.microAlgos(200_000)})
 
+    console.log(`Calling fundAppAccount`)
+    await props.typedClient.appClient.fundAppAccount({
+      sender: sender, amount: algokit.microAlgos(400_000)
+    })
+
+    console.log(`Calling getAppReference`)
     const { appId } = await props.typedClient.appClient.getAppReference();
     props.setAppID(Number(appId))
 

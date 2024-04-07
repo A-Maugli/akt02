@@ -81,12 +81,15 @@ class BizKor extends Contract {
   /**
    * Buy 1 piece of the asset
    * @param payment Payment in /uAlgos
-   * @param ASAid reference to ASA, (!)
+   * @call assets: [Number(asset)], without it error "unavailable asset" is got
    */
   // eslint-disable-next-line no-unused-vars
-  buyAsset(payment: PayTxn, ASAid: AssetID): void {
+  buyAsset(payment: PayTxn): void {
     /// Ensure asset selling period hasn't ended yet
     assert(globals.latestTimestamp < this.sellPeriodEnd.value);
+
+    /// Check for asset already owned by
+    assert(this.txn.sender.assetBalance(this.asset.value) === 0);
 
     /// Verify payment transaction
     verifyPayTxn(payment, {
@@ -104,9 +107,16 @@ class BizKor extends Contract {
 
     /// Send asset to payer
     sendAssetTransfer({
-      assetReceiver: this.txn.sender,
       xferAsset: this.asset.value,
+      assetReceiver: this.txn.sender,
       assetAmount: 1,
+    });
+
+    /// Freeze the asset
+    sendAssetFreeze({
+      freezeAsset: this.asset.value,
+      freezeAssetAccount: this.txn.sender,
+      freezeAssetFrozen: true,
     });
 
     // Decrease asset amount

@@ -33,7 +33,7 @@ const AppCalls = ({ openModal, setModalState }: AppCallsInterface) => {
     // Instead, you would deploy your contract on your backend and reference it by id.
     // Given the simplicity of the starter contract, we are deploying it on the frontend
     // for demonstration purposes.
-    const appClient = new BizkorClient(
+    const appClient = new BizKorClient(
       {
         sender: { signer, addr: activeAddress } as TransactionSignerAccount,
         resolveBy: 'id',
@@ -43,12 +43,6 @@ const AppCalls = ({ openModal, setModalState }: AppCallsInterface) => {
     )
     await appClient.create.createApplication({}).catch((e: Error) => {
       enqueueSnackbar(`Error deploying the contract: ${e.message}`, { variant: 'error' })
-      setLoading(false)
-      return
-    })
-
-    const response = await appClient.hello({ name: contractInput }).catch((e: Error) => {
-      enqueueSnackbar(`Error calling the contract: ${e.message}`, { variant: 'error' })
       setLoading(false)
       return
     })

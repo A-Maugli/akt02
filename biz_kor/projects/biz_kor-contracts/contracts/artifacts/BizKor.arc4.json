@@ -55,12 +55,7 @@
         {
           "name": "payment",
           "type": "pay",
-          "desc": "Payment in /uAlgos"
-        },
-        {
-          "name": "ASAid",
-          "type": "uint64",
-          "desc": "reference to ASA, (!)"
+          "desc": "Payment in /uAlgos@callassets: [Number(asset)], without it error \"unavailable asset\" is got"
         }
       ],
       "returns": {

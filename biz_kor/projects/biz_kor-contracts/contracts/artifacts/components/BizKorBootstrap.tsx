@@ -4,35 +4,41 @@ import { BizKor, BizKorClient } from '../contracts/BizKorClient'
 import { useWallet } from '@txnlab/use-wallet'
 
 /* Example usage
-<BizKorContinueAssetSell
+<BizKorBootstrap
   buttonClass="btn m-2"
   buttonLoadingNode={<span className="loading loading-spinner" />}
-  buttonNode="Call continueAssetSell"
+  buttonNode="Call bootstrap"
   typedClient={typedClient}
-  axfer={axfer}
+  assetPrice={assetPrice}
+  assetAmount={assetAmount}
+  sellPeriodLength={sellPeriodLength}
 />
 */
-type BizKorContinueAssetSellArgs = BizKor['methods']['continueAssetSell(axfer)void']['argsObj']
+type BizKorBootstrapArgs = BizKor['methods']['bootstrap(uint64,uint64,uint64)void']['argsObj']
 
 type Props = {
   buttonClass: string
   buttonLoadingNode?: ReactNode
   buttonNode: ReactNode
   typedClient: BizKorClient
-  axfer: BizKorContinueAssetSellArgs['axfer']
+  assetPrice: BizKorBootstrapArgs['assetPrice']
+  assetAmount: BizKorBootstrapArgs['assetAmount']
+  sellPeriodLength: BizKorBootstrapArgs['sellPeriodLength']
 }
 
-const BizKorContinueAssetSell = (props: Props) => {
+const BizKorBootstrap = (props: Props) => {
   const [loading, setLoading] = useState<boolean>(false)
   const { activeAddress, signer } = useWallet()
   const sender = { signer, addr: activeAddress! }
 
   const callMethod = async () => {
     setLoading(true)
-    console.log(`Calling continueAssetSell`)
-    await props.typedClient.continueAssetSell(
+    console.log(`Calling bootstrap`)
+    await props.typedClient.bootstrap(
       {
-        axfer: props.axfer,
+        assetPrice: props.assetPrice,
+        assetAmount: props.assetAmount,
+        sellPeriodLength: props.sellPeriodLength,
       },
       { sender },
     )
@@ -46,4 +52,4 @@ const BizKorContinueAssetSell = (props: Props) => {
   )
 }
 
-export default BizKorContinueAssetSell
+export default BizKorBootstrap

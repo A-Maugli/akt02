@@ -3,12 +3,13 @@ import { useWallet } from '@txnlab/use-wallet'
 import React, { useEffect, useState } from 'react'
 import ConnectWallet from './components/ConnectWallet'
 import AppCalls from './components/AppCalls'
-import BizKorCreateApplication from './components/BizKorCreateApplication'
 import { BizKorClient } from './contracts/BizKorClient'
 import * as algokit from '@algorandfoundation/algokit-utils'
 import { getAlgodConfigFromViteEnvironment, getKmdConfigFromViteEnvironment } from './utils/network/getAlgoClientConfigs'
 import { stat } from 'fs'
-import BizKorStartAssetSell from './components/BizKorStartAssetSell'
+import BizKorCreateApplication from './components/BizKorCreateApplication'
+import BizKorBootstrap from './components/BizKorBootstrap'
+import BizKorBuyAsset from './components/BizKorBuyAsset'
 
 interface HomeProps { }
 
@@ -90,7 +91,7 @@ const Home: React.FC<HomeProps> = () => {
             Bizalmi Kör tulajdonrész opciós vételi jog értékesítés
           </p>
           <p className="py-2">
-            Egy zseton 0.1% tulajdonrész megvásárlását teszi lehetőve.
+            Egy zseton 0.1% tulajdonrész megvásárlását teszi lehetővé.
           </p>
 
           <div className="grid">
@@ -101,12 +102,26 @@ const Home: React.FC<HomeProps> = () => {
             </button>
 
             {activeAddress && appID === 0 && (
-              <BizKorCreateApplication
+              <div>
+                <BizKorCreateApplication
+                  buttonClass="btn m-2"
+                  buttonLoadingNode={<span className="loading loading-spinner" />}
+                  buttonNode="A DAO létrehozása"  // BizKorCreateApplication, csak egyszer!
+                  typedClient={typedClient}
+                  setAppID={setAppID}
+                />
+              </div>
+            )}
+
+            {activeAddress && appID !== 0 && (
+              <BizKorBootstrap
                 buttonClass="btn m-2"
                 buttonLoadingNode={<span className="loading loading-spinner" />}
-                buttonNode="A DAO létrehozása"  // BizKorCreateApplication, csak egyszer!
+                buttonNode="Call bootstrap"
                 typedClient={typedClient}
-                setAppID={setAppID}
+                assetPrice={BigInt(10_000)}       // in /uAlgos
+                assetAmount={10}                  // pieces
+                sellPeriodLength={BigInt(1000)}   // in sec
               />
             )}
 
@@ -123,20 +138,20 @@ const Home: React.FC<HomeProps> = () => {
 
             {activeAddress && appID !== 0 && (
               <div>
-                <h2 className="font-bold m-2">Egy zseton ára: {price} Algo</h2>
+                <h2 className="font-bold m-2">Egy zseton ára: {price/1_000_000} Algo</h2>
                 <h2 className="font-bold m-2">Zsetonok száma: {amount}</h2>
               </div>
             )}
 
-            <BizKorStartAssetSell
-              buttonClass="btn m-2"
-              buttonLoadingNode={<span className="loading loading-spinner" />}
-              buttonNode="Call startAssetSell"
-              typedClient={typedClient}
-              price={price}
-              length={length}
-              axfer={axfer}
-            />
+            {activeAddress && appID !== 0 && (
+              <BizKorBuyAsset
+                buttonClass="btn m-2"
+                buttonLoadingNode={<span className="loading loading-spinner" />}
+                buttonNode="Zseton vétel"
+                typedClient={typedClient}
+              //payment={payment}
+              />
+            )}
 
             {activeAddress && (
               <button data-test-id="appcalls-demo" className="btn m-2" onClick={toggleAppCallsModal}>

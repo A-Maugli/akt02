@@ -2,33 +2,49 @@
 import { ReactNode, useState } from 'react'
 import { BizKor, BizKorClient } from '../contracts/BizKorClient'
 import { useWallet } from '@txnlab/use-wallet'
+import * as algokit from '@algorandfoundation/algokit-utils'
 
 /* Example usage
-<BizKorInitGlobalKeys
+<BizKorBootstrap
   buttonClass="btn m-2"
   buttonLoadingNode={<span className="loading loading-spinner" />}
-  buttonNode="Call initGlobalKeys"
+  buttonNode="Call bootstrap"
   typedClient={typedClient}
+  assetPrice={assetPrice}
+  assetAmount={assetAmount}
+  sellPeriodLength={sellPeriodLength}
 />
 */
+type BizKorBootstrapArgs = BizKor['methods']['bootstrap(uint64,uint64,uint64)void']['argsObj']
+
 type Props = {
   buttonClass: string
   buttonLoadingNode?: ReactNode
   buttonNode: ReactNode
   typedClient: BizKorClient
+  assetPrice: BizKorBootstrapArgs['assetPrice']
+  assetAmount: BizKorBootstrapArgs['assetAmount']
+  sellPeriodLength: BizKorBootstrapArgs['sellPeriodLength']
 }
 
-const BizKorInitGlobalKeys = (props: Props) => {
+const BizKorBootstrap = (props: Props) => {
   const [loading, setLoading] = useState<boolean>(false)
   const { activeAddress, signer } = useWallet()
   const sender = { signer, addr: activeAddress! }
 
   const callMethod = async () => {
     setLoading(true)
-    console.log(`Calling initGlobalKeys`)
-    await props.typedClient.initGlobalKeys(
-      {},
-      { sender },
+    console.log(`Calling bootstrap`)
+    await props.typedClient.bootstrap(
+      {
+        assetPrice: props.assetPrice,
+        assetAmount: props.assetAmount,
+        sellPeriodLength: props.sellPeriodLength,
+      },
+      {
+        sender: sender, 
+        sendParams: { fee: algokit.microAlgos(2_000) }
+      },
     )
     setLoading(false)
   }
@@ -40,4 +56,4 @@ const BizKorInitGlobalKeys = (props: Props) => {
   )
 }
 
-export default BizKorInitGlobalKeys
+export default BizKorBootstrap

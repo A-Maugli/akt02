@@ -138,13 +138,13 @@ describe('BizKor', () => {
     const compose = appClient.compose().buyAsset(
       {
         payment: tx1,
-        ASAid: asset,
       },
       {
         sender: signer1,
         sendParams: {
-          fee: algokit.microAlgos(2000),
+          fee: algokit.microAlgos(3000),
         },
+        assets: [Number(asset)],
       }
     );
 
@@ -158,6 +158,7 @@ describe('BizKor', () => {
     console.log('buyAsset txId:', txId);
   });
   test.skip('deleteApplication', async () => {
+    // Fails: "logic eval error: inner tx 0 failed: cannot close asset ID in allocating account."
     const globalState = await appClient.getGlobalState();
     const asset = globalState.asset!.asNumber();
     // fee must be 3000 /uAlgos, due to the inner transaction
