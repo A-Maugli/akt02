@@ -12,6 +12,12 @@ algokit.Config.configure({ populateAppCallResources: true });
 let appClient: BizKorClient;
 
 describe('BizKor', () => {
+  const log = false; // skip console.log() calls
+  const paramAppVersion = 'v1.1'; // app version
+  const paramAssetPrice = 1_000_000; // microAlgos
+  const paramAssetAmountInitial = 10; // pieces
+  const paramSellPeriodLength = 1000; // sec
+
   let acc1: algosdk.Account;
   let signer1: TransactionSignerAccount;
   let acc2: algosdk.Account;
@@ -30,7 +36,7 @@ describe('BizKor', () => {
       algod,
       kmd
     );
-    console.log('acc1.addr (token buyer):', acc1.addr);
+    if (log) console.log('acc1.addr (token buyer):', acc1.addr);
     // signer1 = algosdk.makeBasicAccountTransactionSigner(sender1);
     signer1 = {
       addr: acc1.addr,
@@ -48,7 +54,7 @@ describe('BizKor', () => {
       algod,
       kmd
     );
-    console.log('acc2.addr (app creator):', acc2.addr);
+    if (log) console.log('acc2.addr (app creator):', acc2.addr);
 
     appClient = new BizKorClient(
       {
@@ -63,10 +69,10 @@ describe('BizKor', () => {
   });
 
   test('bootstrap', async () => {
-    await appClient.appClient.fundAppAccount(algokit.microAlgos(400_000));
-    const assetPrice = 1_000_000;
-    const assetAmount = 10;
-    const sellPeriodLength = 1000;
+    await appClient.appClient.fundAppAccount(algokit.microAlgos(600_000));
+    const assetPrice = paramAssetPrice;
+    const assetAmount = paramAssetAmountInitial;
+    const sellPeriodLength = paramSellPeriodLength;
     // fee must be 2000 /uAlgos, due to the inner transaction
     await appClient.bootstrap(
       { assetPrice, assetAmount, sellPeriodLength },
@@ -78,41 +84,91 @@ describe('BizKor', () => {
     expect(globalState.asa_price?.asNumber()).toBe(assetPrice);
   });
 
-  test('getGlobalState', async () => {
-    const { algod } = fixture.context;
+  test('getAppVersion', async () => {
     const version = await appClient.getAppVersion({});
-    console.log('appClient.getAppVersion({}):', version.return);
-    const appCreatorAddr = await appClient.getAppCreatorAddress({});
-    console.log('appClient.getAppCreatorAddress({}):', appCreatorAddr.return);
-    const assetAmountInitial = await appClient.getAssetAmountInitial({});
-    console.log('appClient.getAssetAmountInitial({}):', assetAmountInitial.return);
+    expect(version.return).toBe(paramAppVersion);
+  });
 
+  test('getAppCreatorAddress', async () => {
+    const appCreatorAddress = await appClient.getAppCreatorAddress({});
+    expect(appCreatorAddress.return).toBe(acc2.addr);
+  });
+
+  test('getAssetAmountInitial', async () => {
+    const assetAmountInitial = await appClient.getAssetAmountInitial({});
+    expect(assetAmountInitial.return).toBe(BigInt(paramAssetAmountInitial));
+  });
+
+  test('getAssetAmount', async () => {
+    const assetAmountInitial = await appClient.getAssetAmount({});
+    expect(assetAmountInitial.return).toBe(BigInt(paramAssetAmountInitial));
+  });
+
+  test('getAssetPrice', async () => {
+    const assetPrice = await appClient.getAssetPrice({});
+    expect(assetPrice.return).toBe(BigInt(paramAssetPrice));
+  });
+
+  test('getAssetId', async () => {
+    const assetId = await appClient.getAssetId({});
+    expect(assetId.return).toBeGreaterThan(BigInt(1_000));
+  });
+
+  test('getSellPeriodEnd', async () => {
+    const sellPeriodEnd = await appClient.getSellPeriodEnd({});
+    // get date/time
+    const now = new Date();
+    // get msec since 1970
+    const millisecondsSinceEpoch = now.getTime();
+    // get sec from msec
+    const secondsSinceEpoch = Math.floor(millisecondsSinceEpoch / 1000);
+    // check sellPeriodEnd
+    if (log) console.log('sellPeriodEnd: ', sellPeriodEnd.return);
+    expect(sellPeriodEnd.return).toBeGreaterThan(BigInt(secondsSinceEpoch)); // "algokit localnet reset" may be required
+    expect(sellPeriodEnd.return).toBeLessThan(BigInt(secondsSinceEpoch + paramSellPeriodLength));
+  });
+
+  test('getGlobalState', async () => {
     const globalState = await appClient.getGlobalState();
-    const apv = globalState.apv?.asString();
-    const apca = globalState.apca?.asString();
+    const apv = globalState.apv!.asByteArray();
+    const apca = globalState.apca?.asByteArray();
     const asaTotal = globalState.asa_total?.asNumber();
     const asaAmt = globalState.asa_amt?.asNumber();
     const asaPrice = globalState.asa_price?.asNumber();
     const asaId = globalState.asa_id?.asNumber();
     const end = globalState.end?.asNumber();
     // console.log('globalState:', globalState);
-    console.log('getGlobalState apv (appVersion):', apv);
-    console.log('getGlobalState apca (appCreatorAddress):', apca);
-    console.log('getGlobalState asa_total (assetAmountInitial):', asaTotal);
-    console.log('getGlobalState asa_amt (assetAmount):', asaAmt);
-    console.log('getGlobalState asa_price (assetPrice):', asaPrice);
-    console.log('getGlobalState asa_id (asset):', asaId);
-    console.log('getGlobalState end (sellPeriodEnd):', end);
-  });
-  test('buyAsset two times', async () => {
-    const { algod, testAccount } = fixture.context;
-    const params = await algod.getTransactionParams().do();
-    await appClient.appClient.fundAppAccount(algokit.microAlgos(400_000));
 
-    // Opt in to asset
+    // get apvGood, i.e. without the length (first 2 bytes)
+    const apvGood = Buffer.from(apv).slice(2).toString('utf-8'); // get rid of length
+    if (log) console.log('apvGood: ', apvGood);
+    expect(apvGood).toBe(paramAppVersion);
+    // get apcaGood. i.e. encode 32 byte Algorand address as string
+    const bufferApca = Buffer.from(apca!);
+    if (log) console.log('bufferApca: ', bufferApca);
+    if (log) console.log('bufferApca.length: ', bufferApca.length);
+    const apcaGood = algosdk.encodeAddress(bufferApca); // encode as Algorand address
+    if (log) console.log('apcaGood: ', apcaGood);
+    expect(apcaGood).toBe(acc2.addr);
+
+    if (log) console.log('getGlobalState apv (appVersion):', apv);
+    if (log) console.log('getGlobalState apca (appCreatorAddress):', apca);
+    if (log) console.log('getGlobalState asa_total (assetAmountInitial):', asaTotal);
+    expect(asaTotal).toBe(paramAssetAmountInitial);
+    if (log) console.log('getGlobalState asa_amt (assetAmount):', asaAmt);
+    expect(asaAmt).toBe(paramAssetAmountInitial);
+    if (log) console.log('getGlobalState asa_price (assetPrice):', asaPrice);
+    expect(asaPrice).toBe(paramAssetPrice);
+    console.log('getGlobalState asa_id (asset):', asaId);
+    if (log) console.log('getGlobalState end (sellPeriodEnd):', end);
+  });
+
+  test('opt in to asset', async () => {
+    const { algod } = fixture.context;
+    const params = await algod.getTransactionParams().do();
     const globalState = await appClient.getGlobalState();
     const asset = globalState.asa_id!.asNumber();
-    console.log('Try to opt in to asset: ', asset, testAccount.addr);
+    if (log) console.log('Try to opt in to asset: ', asset, acc1.addr);
     const txn1 = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
       from: acc1.addr,
       to: acc1.addr,
@@ -123,77 +179,70 @@ describe('BizKor', () => {
     const stxn1 = txn1.signTxn(acc1.sk);
     const txn2 = await algod.sendRawTransaction(stxn1).do();
     await algosdk.waitForConfirmation(algod, txn2.txId, 4);
-
-    // Make a payment tx, to buy asset
-    const appRef = await appClient.appClient.getAppReference();
-    // const appAddres = await algosdk.getApplicationAddress(appRef.appId);
-    console.log('buyAsset: testAccount.addr ', testAccount.addr);
-    console.log('buyAsset: appRef.appAddress ', appRef.appAddress);
-    console.log('buyAsset: appCreatorAddr ', acc2.addr);
-    const tx1 = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-      from: acc1.addr,
-      to: acc2.addr,
-      amount: 1_000_000,
-      suggestedParams: params,
-    });
-
-    // Buy asset
-    const compose = appClient.compose().buyAsset(
-      {
-        payment: tx1,
-      },
-      {
-        sender: signer1,
-        sendParams: {
-          fee: algokit.microAlgos(3000),
-        },
-        assets: [Number(asset)],
-      }
-    );
-
-    const atc = await compose.atc();
-    const txs = atc.buildGroup().map((tx) => tx.txn);
-    const signed = await signer1.signer(
-      txs,
-      Array.from(Array(txs.length), (_, i) => i)
-    );
-    const { txId } = await algod.sendRawTransaction(signed).do();
-    console.log('buyAsset txId:', txId);
   });
+
   test('buyAsset', async () => {
     const { algod, testAccount } = fixture.context;
     const params = await algod.getTransactionParams().do();
-    await appClient.appClient.fundAppAccount(algokit.microAlgos(400_000));
-
-    // Opt in to asset
-    const globalState = await appClient.getGlobalState();
-    const asset = globalState.asa_id!.asNumber();
-    console.log('Try to opt in to asset: ', asset, testAccount.addr);
-    const txn1 = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
-      from: acc1.addr,
-      to: acc1.addr,
-      amount: 0,
-      assetIndex: asset,
-      suggestedParams: params,
-    });
-    const stxn1 = txn1.signTxn(acc1.sk);
-    const txn2 = await algod.sendRawTransaction(stxn1).do();
-    await algosdk.waitForConfirmation(algod, txn2.txId, 4);
-
     // Make a payment tx, to buy asset
     const appRef = await appClient.appClient.getAppReference();
     // const appAddres = await algosdk.getApplicationAddress(appRef.appId);
-    console.log('buyAsset: testAccount.addr ', testAccount.addr);
-    console.log('buyAsset: appRef.appAddress ', appRef.appAddress);
-    console.log('buyAsset: appCreatorAddr ', acc2.addr);
+    if (log) console.log('buyAsset: testAccount.addr ', testAccount.addr);
+    if (log) console.log('buyAsset: appRef.appAddress ', appRef.appAddress);
+    if (log) console.log('buyAsset: appCreatorAddr ', acc2.addr);
     const tx1 = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
       from: acc1.addr,
-      to: acc2.addr,
-      amount: 1_000_000,
+      to: appRef.appAddress,
+      amount: paramAssetPrice,
       suggestedParams: params,
     });
 
     // Buy asset
+    const globalState = await appClient.getGlobalState();
+    const asset = globalState.asa_id!.asNumber();
+    const compose = appClient.compose().buyAsset(
+      {
+        payment: tx1,
+      },
+      {
+        sender: signer1,
+        sendParams: {
+          fee: algokit.microAlgos(3000),
+        },
+        assets: [Number(asset)],
+      }
+    );
+    // atc, build group, sign, send
+    const atc = await compose.atc();
+    const txs = atc.buildGroup().map((tx) => tx.txn);
+    const signed = await signer1.signer(
+      txs,
+      Array.from(Array(txs.length), (_, i) => i)
+    );
+    const txg = await algod.sendRawTransaction(signed).do();
+    await algosdk.waitForConfirmation(algod, txg.txId, 4);
+  });
+
+  test('buyAsset 2nd time', async () => {
+    const { algod, testAccount } = fixture.context;
+    const params = await algod.getTransactionParams().do();
+
+    // Make a payment tx, to buy asset
+    const appRef = await appClient.appClient.getAppReference();
+    // const appAddres = await algosdk.getApplicationAddress(appRef.appId);
+    if (log) console.log('buyAsset: testAccount.addr ', testAccount.addr);
+    if (log) console.log('buyAsset: appRef.appAddress ', appRef.appAddress);
+    if (log) console.log('buyAsset: appCreatorAddr ', acc2.addr);
+    const tx1 = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+      from: acc1.addr,
+      to: appRef.appAddress,
+      amount: paramAssetPrice,
+      suggestedParams: params,
+    });
+
+    // Buy asset
+    const globalState = await appClient.getGlobalState();
+    const asset = globalState.asa_id!.asNumber();
     const compose = appClient.compose().buyAsset(
       {
         payment: tx1,
@@ -213,18 +262,46 @@ describe('BizKor', () => {
       txs,
       Array.from(Array(txs.length), (_, i) => i)
     );
-    const { txId } = await algod.sendRawTransaction(signed).do();
-    console.log('buyAsset txId:', txId);
+    try {
+      await algod.sendRawTransaction(signed).do();
+    } catch (err) {
+      console.log('this test should fail, as the buyer already has a coin', err); // err.response.body.data.pc);
+    }
   });
-  test.skip('deleteApplication', async () => {
-    // Fails: "logic eval error: inner tx 0 failed: cannot close asset ID in allocating account."
+
+  test('sendAlgosToCreator', async () => {
+    await appClient.sendAlgosToCreator({}, { sendParams: { fee: algokit.microAlgos(2_000) } });
+  });
+
+  test('clawback', async () => {
+    await appClient.clawback({ addr: acc1.addr }, { sendParams: { fee: algokit.microAlgos(2_000) } });
+  });
+
+  test('opt out buyer from asset', async () => {
+    const { algod } = fixture.context;
+    const params = await algod.getTransactionParams().do();
     const globalState = await appClient.getGlobalState();
     const asset = globalState.asa_id!.asNumber();
-    // fee must be 3000 /uAlgos, due to the inner transaction
-    const tx = await appClient.delete.deleteApplication(
-      { ASAid: asset },
-      { sendParams: { fee: algokit.microAlgos(3_000) } }
-    );
-    console.log('deleteApplication, tx:', tx);
+    const appRef = await appClient.appClient.getAppReference();
+    if (log) console.log('Try to opt out from asset: ', acc1.addr);
+    const txn1 = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+      from: acc1.addr,
+      to: appRef.appAddress,
+      closeRemainderTo: appRef.appAddress,
+      amount: 0,
+      assetIndex: asset,
+      suggestedParams: params,
+    });
+    const stxn1 = txn1.signTxn(acc1.sk);
+    const txn2 = await algod.sendRawTransaction(stxn1).do();
+    await algosdk.waitForConfirmation(algod, txn2.txId, 4);
+  });
+
+  test('deleteAsset', async () => {
+    await appClient.deleteAsset({}, { sendParams: { fee: algokit.microAlgos(2_000) } });
+  });
+
+  test('deleteApplication', async () => {
+    await appClient.delete.deleteApplication({}, { sendParams: { fee: algokit.microAlgos(2_000) } });
   });
 });

@@ -1,5 +1,18 @@
 import { Contract } from '@algorandfoundation/tealscript';
-// import { makePaymentTxnWithSuggestedParams } from 'algosdk';
+
+// History:
+//  v1.0, 07-Apr-2024, LG
+//    - in buyAsset, asset is also passed as param in the txn foreign array.
+//      See tests, "assets: [Number(asset)],"
+//      Otherwise there is "unavailable asset" error
+//  v1.1, 14-Apr-2024, LG
+//    - added appVersion as a global key-value pair
+//    - added getters for global values
+//    - modified buyAsset, payment is due to the app address (formerly: app creator address)
+//    - added sendAlgos, to send Algos back from the app to the app creator address
+//    - added clawback, to force moving back assets from a given address to the app address
+//    - added deleteAsset, to delete assets from the app
+//    - modified deleteApplication
 
 // eslint-disable-next-line no-unused-vars
 class BizKor extends Contract {
@@ -31,17 +44,19 @@ class BizKor extends Contract {
   }
 
   /**
-   * boostrap: create ASA, set global key values
+   * create ASA, set global key values
    * @param assetPrice ASA price in microAlgos
-   * @param assetAmount ASA inital amount
+   * @param assetAmount ASA inital amount in pieces
    * @param sellPeriodLength sell period length in secs
    */
   bootstrap(assetPrice: uint64, assetAmount: uint64, sellPeriodLength: uint64) {
-    /// Only allow app creator to create the asset
+    /// allow only the app creator to call this method
     verifyAppCallTxn(this.txn, { sender: globals.creatorAddress });
-    /// Check it hasn't been done yet
-    assert(this.assetAmount.value === 0);
 
+    /// assert bootstrap hasn't been called yet
+    assert(this.assetAmountInitial.value === 0);
+
+    // create asset
     const asset = sendAssetCreation({
       configAssetTotal: assetAmount,
       configAssetDecimals: 0,
@@ -55,6 +70,7 @@ class BizKor extends Contract {
       configAssetClawback: globals.currentApplicationAddress,
     });
 
+    // set global values
     this.assetAmountInitial.value = assetAmount;
     this.assetAmount.value = assetAmount;
     this.assetPrice.value = assetPrice;
@@ -67,7 +83,6 @@ class BizKor extends Contract {
    * @returns app creator address
    */
   getAppCreatorAddress(): Address {
-    // return globals.creatorAddress;
     return this.appCreatorAddress.value;
   }
 
@@ -97,7 +112,7 @@ class BizKor extends Contract {
 
   /**
    * get asa price
-   * @returns asa price in Algos
+   * @returns asa price in microAlgos
    */
   getAssetPrice(): uint64 {
     return this.assetPrice.value;
@@ -121,64 +136,100 @@ class BizKor extends Contract {
 
   /**
    * Buy 1 piece of the asset
-   * @param payment Payment in /uAlgos. asset is also passed as param in assets: [Number(asset)], without it "unavailable asset" error is got
+   * @param payment txn, where amount is equal to assetPrice, receiver is app address
    */
-  // eslint-disable-next-line no-unused-vars
   buyAsset(payment: PayTxn): void {
     /// Ensure asset selling period hasn't ended yet
     assert(globals.latestTimestamp < this.sellPeriodEnd.value);
 
-    /// Check for asset already owned by
+    /// Ensure that buyer hasn't bought earlier this asset
     assert(this.txn.sender.assetBalance(this.asset.value) === 0);
 
-    /// Verify payment transaction
+    /// Verify payment transaction: receiver is the app, amount is the asset price
     verifyPayTxn(payment, {
       sender: this.txn.sender,
-      receiver: globals.creatorAddress,
+      receiver: globals.currentApplicationAddress,
       amount: { greaterThanEqualTo: this.assetPrice.value, lessThanEqualTo: this.assetPrice.value },
       rekeyTo: globals.zeroAddress,
       closeRemainderTo: globals.zeroAddress,
     });
 
-    /// Verify asset amount
+    /// Is there still an asset to sell? (this can be optimized away)
     assert(this.assetAmount.value > 0);
 
-    /// @todo: check asset amount in  buyer account
-
-    /// Send asset to payer
+    /// Send asset to the buyer
     sendAssetTransfer({
       xferAsset: this.asset.value,
       assetReceiver: this.txn.sender,
       assetAmount: 1,
     });
 
-    /// Freeze the asset
+    /// Freeze the asset at the buyer's address (this can be optimized away)
     sendAssetFreeze({
       freezeAsset: this.asset.value,
       freezeAssetAccount: this.txn.sender,
       freezeAssetFrozen: true,
     });
 
-    // Decrease asset amount
+    // Decrease asset amount (this can be optimized away)
     this.assetAmount.value = this.assetAmount.value - 1;
   }
 
   /**
-   * Delete app with ABI method
-   * @param ASAid reference to ASA, (!)
+   * Send Algos from the app address to the app creator address
    */
-  // eslint-disable-next-line no-unused-vars
-  deleteApplication(ASAid: AssetID): void {
-    /// Only allow app creator to delete the app account
+  sendAlgosToCreator(): void {
+    /// Allow only the creator to call this method
     verifyAppCallTxn(this.txn, { sender: globals.creatorAddress });
 
-    /// Send back assets to app creator account
+    /// Send back all the Algos above minAmount to the app creator
+    const minAmount = 600_000; // uAlgos
+    const balance = globals.currentApplicationAddress.balance;
+    if (balance > minAmount) {
+      sendPayment({
+        receiver: globals.creatorAddress,
+        amount: balance - minAmount,
+      });
+    }
+  }
+
+  /**
+   * Clawback asset to app
+   * @param address from which to clawback asset
+   */
+  clawback(addr: Address): void {
+    /// Allow only the app creator to call this method
+    verifyAppCallTxn(this.txn, { sender: globals.creatorAddress });
+
+    /// Clawback assets to app
     sendAssetTransfer({
-      assetReceiver: globals.creatorAddress,
       xferAsset: this.asset.value,
-      assetAmount: 0,
-      assetCloseTo: globals.creatorAddress,
+      assetAmount: 1,
+      assetSender: addr,
+      assetReceiver: globals.currentApplicationAddress,
     });
+  }
+
+  /**
+   * Delete asset within app
+   */
+  deleteAsset(): void {
+    /// Allow only the app creator to call this method
+    verifyAppCallTxn(this.txn, { sender: globals.creatorAddress });
+    // assert(this.txn.sender === this.app.creator);
+
+    /// Delete asset
+    sendAssetConfig({
+      configAsset: this.asset.value,
+    });
+  }
+
+  /**
+   * Delete app with ABI method
+   */
+  deleteApplication(): void {
+    /// Allow only the app creator to call this method
+    verifyAppCallTxn(this.txn, { sender: globals.creatorAddress });
 
     /// Send back Algos to app creator account
     sendPayment({

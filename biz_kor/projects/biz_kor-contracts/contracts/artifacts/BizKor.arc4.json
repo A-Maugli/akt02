@@ -12,7 +12,7 @@
     },
     {
       "name": "bootstrap",
-      "desc": "boostrap: create ASA, set global key values",
+      "desc": "create ASA, set global key values",
       "args": [
         {
           "name": "assetPrice",
@@ -22,7 +22,7 @@
         {
           "name": "assetAmount",
           "type": "uint64",
-          "desc": "ASA inital amount"
+          "desc": "ASA inital amount in pieces"
         },
         {
           "name": "sellPeriodLength",
@@ -76,7 +76,7 @@
       "args": [],
       "returns": {
         "type": "uint64",
-        "desc": "asa price in Algos"
+        "desc": "asa price in microAlgos"
       }
     },
     {
@@ -104,7 +104,7 @@
         {
           "name": "payment",
           "type": "pay",
-          "desc": "Payment in /uAlgos. asset is also passed as param in assets: [Number(asset)], without it \"unavailable asset\" error is got"
+          "desc": "txn, where amount is equal to assetPrice, receiver is app address"
         }
       ],
       "returns": {
@@ -112,15 +112,38 @@
       }
     },
     {
-      "name": "deleteApplication",
-      "desc": "Delete app with ABI method",
+      "name": "sendAlgosToCreator",
+      "desc": "Send Algos from the app address to the app creator address",
+      "args": [],
+      "returns": {
+        "type": "void"
+      }
+    },
+    {
+      "name": "clawback",
+      "desc": "Clawback asset to app",
       "args": [
         {
-          "name": "ASAid",
-          "type": "uint64",
-          "desc": "reference to ASA, (!)"
+          "name": "addr",
+          "type": "address"
         }
       ],
+      "returns": {
+        "type": "void"
+      }
+    },
+    {
+      "name": "deleteAsset",
+      "desc": "Delete asset within app",
+      "args": [],
+      "returns": {
+        "type": "void"
+      }
+    },
+    {
+      "name": "deleteApplication",
+      "desc": "Delete app with ABI method",
+      "args": [],
       "returns": {
         "type": "void"
       }
