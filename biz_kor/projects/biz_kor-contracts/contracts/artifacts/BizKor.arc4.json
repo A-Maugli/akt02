@@ -12,7 +12,7 @@
     },
     {
       "name": "bootstrap",
-      "desc": "boostrap, create ASA, set global key values",
+      "desc": "boostrap: create ASA, set global key values",
       "args": [
         {
           "name": "assetPrice",
@@ -35,17 +35,66 @@
       }
     },
     {
-      "name": "optIntoAsset",
-      "desc": "Obsolete, Opt in to an asset for the app account",
-      "args": [
-        {
-          "name": "asset",
-          "type": "uint64",
-          "desc": "Asset to opt into"
-        }
-      ],
+      "name": "getAppCreatorAddress",
+      "desc": "get app creator address",
+      "args": [],
       "returns": {
-        "type": "void"
+        "type": "address",
+        "desc": "app creator address"
+      }
+    },
+    {
+      "name": "getAppVersion",
+      "desc": "get app version",
+      "args": [],
+      "returns": {
+        "type": "string",
+        "desc": "app version"
+      }
+    },
+    {
+      "name": "getAssetAmountInitial",
+      "desc": "get asa initial amount",
+      "args": [],
+      "returns": {
+        "type": "uint64",
+        "desc": "asa amount minted initially"
+      }
+    },
+    {
+      "name": "getAssetAmount",
+      "desc": "get asa amount",
+      "args": [],
+      "returns": {
+        "type": "uint64",
+        "desc": "sellable asa amount"
+      }
+    },
+    {
+      "name": "getAssetPrice",
+      "desc": "get asa price",
+      "args": [],
+      "returns": {
+        "type": "uint64",
+        "desc": "asa price in Algos"
+      }
+    },
+    {
+      "name": "getAssetID",
+      "desc": "get asa id",
+      "args": [],
+      "returns": {
+        "type": "uint64",
+        "desc": "asa id"
+      }
+    },
+    {
+      "name": "getSellPeriodEnd",
+      "desc": "get end of sell period",
+      "args": [],
+      "returns": {
+        "type": "uint64",
+        "desc": "end of sell period as absolute time in sec, from 01-Jan-1970"
       }
     },
     {
@@ -55,7 +104,7 @@
         {
           "name": "payment",
           "type": "pay",
-          "desc": "Payment in /uAlgos@callassets: [Number(asset)], without it error \"unavailable asset\" is got"
+          "desc": "Payment in /uAlgos. asset is also passed as param in assets: [Number(asset)], without it \"unavailable asset\" error is got"
         }
       ],
       "returns": {

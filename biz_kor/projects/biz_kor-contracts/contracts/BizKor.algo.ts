@@ -3,20 +3,26 @@ import { Contract } from '@algorandfoundation/tealscript';
 
 // eslint-disable-next-line no-unused-vars
 class BizKor extends Contract {
-  assetAmountInitial = GlobalStateKey<uint64>();
+  appVersion = GlobalStateKey<string>({ key: 'apv' });
 
-  assetAmount = GlobalStateKey<uint64>();
+  appCreatorAddress = GlobalStateKey<Address>({ key: 'apca' });
 
-  assetPrice = GlobalStateKey<uint64>();
+  assetAmountInitial = GlobalStateKey<uint64>({ key: 'asa_total' });
 
-  asset = GlobalStateKey<AssetID>();
+  assetAmount = GlobalStateKey<uint64>({ key: 'asa_amt' });
 
-  sellPeriodEnd = GlobalStateKey<uint64>();
+  assetPrice = GlobalStateKey<uint64>({ key: 'asa_price' });
+
+  asset = GlobalStateKey<AssetID>({ key: 'asa_id' });
+
+  sellPeriodEnd = GlobalStateKey<uint64>({ key: 'end' });
 
   /**
    * Init the values of global keys
    */
   createApplication(): void {
+    this.appVersion.value = 'v1.1';
+    this.appCreatorAddress.value = globals.creatorAddress;
     this.assetAmountInitial.value = 0;
     this.assetAmount.value = 0;
     this.assetPrice.value = 0;
@@ -25,7 +31,7 @@ class BizKor extends Contract {
   }
 
   /**
-   * boostrap, create ASA, set global key values
+   * boostrap: create ASA, set global key values
    * @param assetPrice ASA price in microAlgos
    * @param assetAmount ASA inital amount
    * @param sellPeriodLength sell period length in secs
@@ -57,31 +63,65 @@ class BizKor extends Contract {
   }
 
   /**
-   * Obsolete, Opt in to an asset for the app account
-   * @param asset Asset to opt into
+   * get app creator address
+   * @returns app creator address
    */
-  optIntoAsset(asset: AssetID): void {
-    /// Only allow app creator to opt the app account into asset
-    verifyAppCallTxn(this.txn, { sender: globals.creatorAddress });
+  getAppCreatorAddress(): Address {
+    // return globals.creatorAddress;
+    return this.appCreatorAddress.value;
+  }
 
-    /// Verify asset hasn't already been opted into
-    assert(this.asset.value === AssetID.zeroIndex);
+  /**
+   * get app version
+   * @returns app version
+   */
+  getAppVersion(): string {
+    return this.appVersion.value;
+  }
 
-    /// Save asset in global state
-    this.asset.value = asset;
+  /**
+   * get asa initial amount
+   * @returns asa amount minted initially
+   */
+  getAssetAmountInitial(): uint64 {
+    return this.assetAmountInitial.value;
+  }
 
-    /// Submit opt-in transaction: 0 asset transfer to self
-    sendAssetTransfer({
-      assetReceiver: this.app.address,
-      xferAsset: asset,
-      assetAmount: 0,
-    });
+  /**
+   * get asa amount
+   * @returns sellable asa amount
+   */
+  getAssetAmount(): uint64 {
+    return this.assetAmountInitial.value;
+  }
+
+  /**
+   * get asa price
+   * @returns asa price in Algos
+   */
+  getAssetPrice(): uint64 {
+    return this.assetPrice.value;
+  }
+
+  /**
+   * get asa id
+   * @returns asa id
+   */
+  getAssetID(): AssetID {
+    return this.asset.value;
+  }
+
+  /**
+   * get end of sell period
+   * @returns end of sell period as absolute time in sec, from 01-Jan-1970
+   */
+  getSellPeriodEnd(): uint64 {
+    return this.sellPeriodEnd.value;
   }
 
   /**
    * Buy 1 piece of the asset
-   * @param payment Payment in /uAlgos
-   * @call assets: [Number(asset)], without it error "unavailable asset" is got
+   * @param payment Payment in /uAlgos. asset is also passed as param in assets: [Number(asset)], without it "unavailable asset" error is got
    */
   // eslint-disable-next-line no-unused-vars
   buyAsset(payment: PayTxn): void {
