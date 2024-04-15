@@ -6,6 +6,7 @@ import * as algosdk from 'algosdk'
 import * as algokit from '@algorandfoundation/algokit-utils'
 import AlgodClient from 'algosdk/dist/types/client/v2/algod/algod'
 import { getAlgodConfigFromViteEnvironment } from '../utils/network/getAlgoClientConfigs'
+import { useSnackbar } from 'notistack'
 
 /* Example usage
 <BizKorBuyAsset
@@ -23,13 +24,14 @@ type Props = {
   buttonLoadingNode?: ReactNode
   buttonNode: ReactNode
   typedClient: BizKorClient
-  payment: BizKorBuyAssetArgs['payment']
+  //payment: BizKorBuyAssetArgs['payment']
 }
 
 const BizKorBuyAsset = (props: Props) => {
   const [loading, setLoading] = useState<boolean>(false)
-  const { activeAddress, signer } = useWallet()
+  const { activeAddress, signer, sendTransactions } = useWallet()
   const sender = { signer, addr: activeAddress! }
+  const { enqueueSnackbar } = useSnackbar()
 
   const callMethod = async () => {
     setLoading(true)
@@ -44,7 +46,7 @@ const BizKorBuyAsset = (props: Props) => {
     console.log(`Opt in to asset`)
     const params = await algod.getTransactionParams().do();
     const globalState = await props.typedClient.getGlobalState();
-    const asset = globalState.asset!.asNumber();
+    const asset = globalState.asa_id!.asNumber();
     const txn1 = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
         from: activeAddress!,
         to: activeAddress!,
@@ -57,12 +59,12 @@ const BizKorBuyAsset = (props: Props) => {
     console.log(`Calling buyAsset`)
     const appRef = await props.typedClient.appClient.getAppReference();
     const appAddr = appRef.appAddress;
-    const appCreatorAddr = activeAddress;  // @todo: retrieve appCreatorAddr
+    const price = globalState.asa_price!.asNumber();
 
     const tx1 = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
       from: activeAddress!,
-      to: appCreatorAddr!,
-      amount: 10_000,
+      to: appAddr!,
+      amount: price,
       suggestedParams: params,
     });
 
@@ -85,8 +87,50 @@ const BizKorBuyAsset = (props: Props) => {
         txs,
         Array.from(Array(txs.length), (_, i) => i)
       );
-      const { txId } = await algod.sendRawTransaction(signed).do();
-      console.log('buyAsset txId:', txId);
+      //const { txId } = await algod.sendRawTransaction(signed).do();
+      //console.log('buyAsset txId:', txId);
+
+      try {
+        enqueueSnackbar('A vételi tranzakció elküldése...', { variant: 'info' })
+        const waitRoundsToConfirm = 4
+        const { id } = await sendTransactions(signed, waitRoundsToConfirm)
+        enqueueSnackbar(`A tranzakció elküldve: ${id}`, { variant: 'success' })
+      } catch (e: any) {
+        const msg='Nem sikerült a tranzakció elküldése';
+        if (e.response.body.data.pc === 439) {
+          enqueueSnackbar(`${msg}, mert a tranzakció típusa nem fizetési tranzakció`, { variant: 'error' })
+        }
+        else if (e.response.body.data.pc === 454) {
+          enqueueSnackbar(`${msg}, mert véget ért az értékesítési időszak`, { variant: 'error' })
+        }
+        else if (e.response.body.data.pc === 464) {
+          enqueueSnackbar(`${msg}, mert Ön már rendelkezik ezzel a zsetonnal`, { variant: 'error' })
+        }
+        else if (e.response.body.data.pc === 472) {
+          enqueueSnackbar(`${msg}, mert a fizetési tranzakció küldője nem azonos az app call tranzakció küldőjével`, { variant: 'error' })
+        }
+        else if (e.response.body.data.pc === 480) {
+          enqueueSnackbar(`${msg}, mert a fizetési tranzakció címzettje nem azonos az app címével`, { variant: 'error' })
+        }
+        else if (e.response.body.data.pc === 488) {
+          enqueueSnackbar(`${msg}, mert a fizetési tranzakció összege kisebb, mint a zseton ára`, { variant: 'error' })
+        }      
+        else if (e.response.body.data.pc === 496) {
+          enqueueSnackbar(`${msg}, mert a fizetési tranzakció összege nagyobb, mint a zseton ára`, { variant: 'error' })
+        }      
+        else if (e.response.body.data.pc === 504) {
+          enqueueSnackbar(`${msg}, mert a fizetési tranzakció RekeyTo mezője nem nulla`, { variant: 'error' })
+        }
+        else if (e.response.body.data.pc === 512) {
+          enqueueSnackbar(`${msg}, mert a fizetési tranzakció CloseRemainderTo mezője nem nulla`, { variant: 'error' })
+        }
+        else if (e.response.body.data.pc === 515) {
+          enqueueSnackbar(`${msg}, mert nincs már eladható zseton`, { variant: 'error' })
+        }
+        else {
+          enqueueSnackbar(`${msg}, hiba: `+e, { variant: 'error' })
+        }
+      }
 
     setLoading(false)
   }

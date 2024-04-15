@@ -27,8 +27,8 @@ const Home: React.FC<HomeProps> = () => {
     console.log('getAmount() is called')
     try {
       const state = await typedClient.getGlobalState()
-      setAmount(state.assetAmount!.asNumber())
-    } catch (e) {
+      setAmount(state.asa_amt!.asNumber())
+    } catch (e: any) {
       if (e.message !== "Couldn't find global state") {
         console.warn(e)
       }
@@ -40,8 +40,8 @@ const Home: React.FC<HomeProps> = () => {
   const getPrice = async () => {
     try {
       const state = await typedClient.getGlobalState()
-      setPrice(state.assetPrice!.asNumber())
-    } catch (e) {
+      setPrice(state.asa_price!.asNumber())
+    } catch (e: any) {
       if (e.message !== "Couldn't find global state") {
         console.warn(e)
       }
@@ -153,7 +153,7 @@ const Home: React.FC<HomeProps> = () => {
               />
             )}
 
-            {activeAddress && (
+            {activeAddress=='123' && (
               <button data-test-id="appcalls-demo" className="btn m-2" onClick={toggleAppCallsModal}>
                 Contract Interactions Demo
               </button>

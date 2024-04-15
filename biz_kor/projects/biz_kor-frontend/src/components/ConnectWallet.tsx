@@ -14,7 +14,7 @@ const ConnectWallet = ({ openModal, closeModal }: ConnectWalletInterface) => {
   return (
     <dialog id="connect_wallet_modal" className={`modal ${openModal ? 'modal-open' : ''}`}style={{ display: openModal ? 'block' : 'none' }}>
       <form method="dialog" className="modal-box">
-        <h3 className="font-bold text-2xl">Select wallet provider</h3>
+        <h3 className="font-bold text-2xl">Válasszon pénztárcát</h3>
 
         <div className="grid m-2 pt-5">
           {activeAddress && (
@@ -41,7 +41,7 @@ const ConnectWallet = ({ openModal, closeModal }: ConnectWalletInterface) => {
                     style={{ objectFit: 'contain', width: '30px', height: 'auto' }}
                   />
                 )}
-                <span>{isKmd(provider) ? 'LocalNet Wallet' : provider.metadata.name}</span>
+                <span>{isKmd(provider) ? 'LocalNet pénztárca' : provider.metadata.name}</span>
               </button>
             ))}
         </div>
@@ -54,7 +54,7 @@ const ConnectWallet = ({ openModal, closeModal }: ConnectWalletInterface) => {
               closeModal()
             }}
           >
-            Close
+            Bezárás
           </button>
           {activeAddress && (
             <button
@@ -75,7 +75,7 @@ const ConnectWallet = ({ openModal, closeModal }: ConnectWalletInterface) => {
                 }
               }}
             >
-              Logout
+              Kijelentkezés
             </button>
           )}
         </div>
