@@ -2,7 +2,6 @@
 import { useWallet } from '@txnlab/use-wallet'
 import React, { useEffect, useState } from 'react'
 import ConnectWallet from './components/ConnectWallet'
-import AppCalls from './components/AppCalls'
 import { BizKorClient } from './contracts/BizKorClient'
 import * as algokit from '@algorandfoundation/algokit-utils'
 import { getAlgodConfigFromViteEnvironment, getKmdConfigFromViteEnvironment } from './utils/network/getAlgoClientConfigs'
@@ -10,6 +9,7 @@ import { stat } from 'fs'
 import BizKorCreateApplication from './components/BizKorCreateApplication'
 import BizKorBootstrap from './components/BizKorBootstrap'
 import BizKorBuyAsset from './components/BizKorBuyAsset'
+import { AlgoViteClientConfig } from './interfaces/network'
 
 interface HomeProps { }
 
@@ -19,8 +19,46 @@ const Home: React.FC<HomeProps> = () => {
   const [amount, setAmount] = useState<number>(0)
   const [price, setPrice] = useState<number>(0)
   const [openDemoModal, setOpenDemoModal] = useState<boolean>(false)
-  const [appCallsDemoModal, setAppCallsDemoModal] = useState<boolean>(false)
   const { activeAddress } = useWallet()
+
+  const adminMode = import.meta.env.VITE_ADMIN_MODE === 'true';
+  const viteLocalnetAppId = import.meta.env.VITE_LOCALNET_APP_ID;
+  const viteTestnetAppId = import.meta.env.VITE_LOCALNET_APP_ID;
+  const viteMainnetAppId = import.meta.env.VITE_LOCALNET_APP_ID;
+
+  var paramAppId: number; // = 1085 // app ID created before
+
+  const algodConfig = getAlgodConfigFromViteEnvironment()
+
+  const algodClient = algokit.getAlgoClient({
+    server: algodConfig.server,
+    port: algodConfig.port,
+    token: algodConfig.token
+  })
+
+  if (algodConfig.network === '') {
+    paramAppId = Number(viteLocalnetAppId)
+  }
+  else if (algodConfig.network === 'testnet') {
+    paramAppId = Number(viteTestnetAppId)
+  }
+  else if (algodConfig.network === 'mainnet') {
+    paramAppId = Number(viteMainnetAppId)
+  }
+  else {
+    throw('Invalid network in .env ')
+  }
+
+  /*
+  if (!adminMode) {
+    setAppID(paramAppId)  // Too many re-renders
+  }
+*/
+  useEffect(() => {
+    if (!adminMode) {
+      setAppID(paramAppId);
+    }
+  }, [adminMode, paramAppId]);  // Függőségek, amikor a hatás fut le
 
   // Get the available amount of tokens
   const getAmount = async () => {
@@ -49,12 +87,17 @@ const Home: React.FC<HomeProps> = () => {
     }
   }
 
-  // When the appID changes, call getAmount
+  const handleBuyButtonClick = async () => {
+    console.log('handleBuyButtonClick is called')
+    await getAmount();
+  };
+
+  // (When the appID changes,) call getAmount
   useEffect(() => {
     getAmount();
   }, [appID])
 
-  // When the appID changes, call getPrice
+  // (When the appID changes,) call getPrice
   useEffect(() => {
     getPrice();
   }, [appID])
@@ -62,18 +105,6 @@ const Home: React.FC<HomeProps> = () => {
   const toggleWalletModal = () => {
     setOpenWalletModal(!openWalletModal)
   }
-
-  const toggleAppCallsModal = () => {
-    setAppCallsDemoModal(!appCallsDemoModal)
-  }
-
-  const algodConfig = getAlgodConfigFromViteEnvironment()
-
-  const algodClient = algokit.getAlgoClient({
-    server: algodConfig.server,
-    port: algodConfig.port,
-    token: algodConfig.token
-  })
 
   const typedClient = new BizKorClient({
     resolveBy: 'id',
@@ -97,11 +128,15 @@ const Home: React.FC<HomeProps> = () => {
           <div className="grid">
             <div className="divider" />
 
-            <button data-test-id="connect-wallet" className="btn m-2" onClick={toggleWalletModal}>
-              Kapcsolódás a pénztárcához
-            </button>
+            {adminMode && (
+              <div>
+                <button data-test-id="connect-wallet" className="btn m-2" onClick={toggleWalletModal}>
+                  Kapcsolódás a pénztárcához
+                </button>
+              </div>
+            )}
 
-            {activeAddress && appID === 0 && (
+            {adminMode && activeAddress && appID === 0 && (
               <div>
                 <BizKorCreateApplication
                   buttonClass="btn m-2"
@@ -113,7 +148,7 @@ const Home: React.FC<HomeProps> = () => {
               </div>
             )}
 
-            {activeAddress && appID !== 0 && (
+            {adminMode && activeAddress && appID !== 0 && (
               <BizKorBootstrap
                 buttonClass="btn m-2"
                 buttonLoadingNode={<span className="loading loading-spinner" />}
@@ -125,7 +160,7 @@ const Home: React.FC<HomeProps> = () => {
               />
             )}
 
-            {activeAddress && appID !== 0 && (
+            {adminMode && activeAddress && appID !== 0 && (
               <div>
                 <h2 className="font-bold m-2">DAO app id</h2>
                 <input type="number"
@@ -138,30 +173,26 @@ const Home: React.FC<HomeProps> = () => {
 
             {activeAddress && appID !== 0 && (
               <div>
+                <h2 className="font-bold m-2">App id: {appID}</h2>
                 <h2 className="font-bold m-2">Egy zseton ára: {price/1_000_000} Algo</h2>
                 <h2 className="font-bold m-2">Zsetonok száma: {amount}</h2>
               </div>
             )}
 
-            {activeAddress && appID !== 0 && (
+
+            {!adminMode && activeAddress && appID !== 0 && (
               <BizKorBuyAsset
                 buttonClass="btn m-2"
                 buttonLoadingNode={<span className="loading loading-spinner" />}
                 buttonNode="Zseton vétel"
                 typedClient={typedClient}
-              //payment={payment}
+                //payment={payment}
+                onClick={handleBuyButtonClick}
               />
-            )}
-
-            {activeAddress=='123' && (
-              <button data-test-id="appcalls-demo" className="btn m-2" onClick={toggleAppCallsModal}>
-                Contract Interactions Demo
-              </button>
             )}
           </div>
 
           <ConnectWallet openModal={openWalletModal} closeModal={toggleWalletModal} />
-          <AppCalls openModal={appCallsDemoModal} setModalState={setAppCallsDemoModal} />
         </div>
       </div>
     </div>

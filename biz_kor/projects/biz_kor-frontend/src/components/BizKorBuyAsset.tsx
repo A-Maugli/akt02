@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { ReactNode, useState } from 'react'
+import { ReactEventHandler, ReactNode, useState } from 'react'
 import { BizKor, BizKorClient } from '../contracts/BizKorClient'
 import { useWallet } from '@txnlab/use-wallet'
 import * as algosdk from 'algosdk'
@@ -25,6 +25,7 @@ type Props = {
   buttonNode: ReactNode
   typedClient: BizKorClient
   //payment: BizKorBuyAssetArgs['payment']
+  onClick?: React.MouseEventHandler<HTMLButtonElement>
 }
 
 const BizKorBuyAsset = (props: Props) => {
@@ -33,7 +34,7 @@ const BizKorBuyAsset = (props: Props) => {
   const sender = { signer, addr: activeAddress! }
   const { enqueueSnackbar } = useSnackbar()
 
-  const callMethod = async () => {
+  const callMethod = async (event: React.MouseEvent<HTMLButtonElement>) => {
     setLoading(true)
 
     const algodConfig = getAlgodConfigFromViteEnvironment()
@@ -55,7 +56,7 @@ const BizKorBuyAsset = (props: Props) => {
         suggestedParams: params,
       });
     algokit.sendTransaction({transaction: txn1, from: sender }, algod);
-    
+
     console.log(`Calling buyAsset`)
     const appRef = await props.typedClient.appClient.getAppReference();
     const appAddr = appRef.appAddress;
@@ -114,10 +115,10 @@ const BizKorBuyAsset = (props: Props) => {
         }
         else if (e.response.body.data.pc === 488) {
           enqueueSnackbar(`${msg}, mert a fizetési tranzakció összege kisebb, mint a zseton ára`, { variant: 'error' })
-        }      
+        }
         else if (e.response.body.data.pc === 496) {
           enqueueSnackbar(`${msg}, mert a fizetési tranzakció összege nagyobb, mint a zseton ára`, { variant: 'error' })
-        }      
+        }
         else if (e.response.body.data.pc === 504) {
           enqueueSnackbar(`${msg}, mert a fizetési tranzakció RekeyTo mezője nem nulla`, { variant: 'error' })
         }
@@ -133,6 +134,10 @@ const BizKorBuyAsset = (props: Props) => {
       }
 
     setLoading(false)
+
+    if (props.onClick) {
+      props.onClick(event);
+    }
   }
 
   return (
