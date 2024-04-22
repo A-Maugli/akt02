@@ -28,6 +28,11 @@
           "name": "sellPeriodLength",
           "type": "uint64",
           "desc": "sell period length in secs"
+        },
+        {
+          "name": "assetValidityPeriod",
+          "type": "uint64",
+          "desc": "asset validity in secs, after that time it can be clawbacked"
         }
       ],
       "returns": {

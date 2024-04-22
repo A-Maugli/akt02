@@ -13,10 +13,11 @@ let appClient: BizKorClient;
 
 describe('BizKor', () => {
   const log = false; // skip console.log() calls
-  const paramAppVersion = 'v1.1'; // app version
+  const paramAppVersion = 'v1.2'; // app version
   const paramAssetPrice = 1_000_000; // microAlgos
   const paramAssetAmountInitial = 10; // pieces
   const paramSellPeriodLength = 1000; // sec
+  const paramAssetValidityPeriod = 100; // sec
 
   let acc1: algosdk.Account;
   let signer1: TransactionSignerAccount;
@@ -73,9 +74,10 @@ describe('BizKor', () => {
     const assetPrice = paramAssetPrice;
     const assetAmount = paramAssetAmountInitial;
     const sellPeriodLength = paramSellPeriodLength;
+    const assetValidityPeriod = paramAssetValidityPeriod;
     // fee must be 2000 /uAlgos, due to the inner transaction
     await appClient.bootstrap(
-      { assetPrice, assetAmount, sellPeriodLength },
+      { assetPrice, assetAmount, sellPeriodLength, assetValidityPeriod },
       { sendParams: { fee: algokit.microAlgos(2_000) } }
     );
     const globalState = await appClient.getGlobalState();
@@ -137,6 +139,7 @@ describe('BizKor', () => {
     const asaPrice = globalState.asa_price?.asNumber();
     const asaId = globalState.asa_id?.asNumber();
     const end = globalState.end?.asNumber();
+    const asaV = globalState.asa_v?.asNumber();
     // console.log('globalState:', globalState);
 
     // get apvGood, i.e. without the length (first 2 bytes)
@@ -161,6 +164,8 @@ describe('BizKor', () => {
     expect(asaPrice).toBe(paramAssetPrice);
     console.log('getGlobalState asa_id (asset):', asaId);
     if (log) console.log('getGlobalState end (sellPeriodEnd):', end);
+    if (log) console.log('getGlobalState asa_v (assetValidityPeriod):', asaV);
+    expect(asaV).toBe(paramAssetValidityPeriod);
   });
 
   test('opt in to asset', async () => {
@@ -207,7 +212,7 @@ describe('BizKor', () => {
       {
         sender: signer1,
         sendParams: {
-          fee: algokit.microAlgos(3000),
+          fee: algokit.microAlgos(5000),
         },
         assets: [Number(asset)],
       }
@@ -250,7 +255,7 @@ describe('BizKor', () => {
       {
         sender: signer1,
         sendParams: {
-          fee: algokit.microAlgos(3000),
+          fee: algokit.microAlgos(5000),
         },
         assets: [Number(asset)],
       }
@@ -274,6 +279,52 @@ describe('BizKor', () => {
   });
 
   test('clawback', async () => {
+    await appClient.clawback({ addr: acc1.addr }, { sendParams: { fee: algokit.microAlgos(2_000) } });
+  });
+
+  test('buyAsset after clawback', async () => {
+    const { algod, testAccount } = fixture.context;
+    const params = await algod.getTransactionParams().do();
+    // Make a payment tx, to buy asset
+    const appRef = await appClient.appClient.getAppReference();
+    // const appAddres = await algosdk.getApplicationAddress(appRef.appId);
+    if (log) console.log('buyAsset: testAccount.addr ', testAccount.addr);
+    if (log) console.log('buyAsset: appRef.appAddress ', appRef.appAddress);
+    if (log) console.log('buyAsset: appCreatorAddr ', acc2.addr);
+    const tx1 = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+      from: acc1.addr,
+      to: appRef.appAddress,
+      amount: paramAssetPrice,
+      suggestedParams: params,
+    });
+
+    // Buy asset
+    const globalState = await appClient.getGlobalState();
+    const asset = globalState.asa_id!.asNumber();
+    const compose = appClient.compose().buyAsset(
+      {
+        payment: tx1,
+      },
+      {
+        sender: signer1,
+        sendParams: {
+          fee: algokit.microAlgos(5000),
+        },
+        assets: [Number(asset)],
+      }
+    );
+    // atc, build group, sign, send
+    const atc = await compose.atc();
+    const txs = atc.buildGroup().map((tx) => tx.txn);
+    const signed = await signer1.signer(
+      txs,
+      Array.from(Array(txs.length), (_, i) => i)
+    );
+    const txg = await algod.sendRawTransaction(signed).do();
+    await algosdk.waitForConfirmation(algod, txg.txId, 4);
+  });
+
+  test('clawback again', async () => {
     await appClient.clawback({ addr: acc1.addr }, { sendParams: { fee: algokit.microAlgos(2_000) } });
   });
 

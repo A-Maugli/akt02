@@ -76,7 +76,7 @@ const BizKorBuyAsset = (props: Props) => {
       {
         sender: sender,
         sendParams: {
-          fee: algokit.microAlgos(3000),
+          fee: algokit.microAlgos(5000),
         },
         assets: [Number(asset)],
       }
@@ -98,34 +98,34 @@ const BizKorBuyAsset = (props: Props) => {
         enqueueSnackbar(`A tranzakció elküldve: ${id}`, { variant: 'success' })
       } catch (e: any) {
         const msg='Nem sikerült a tranzakció elküldése';
-        if (e.response.body.data.pc === 439) {
+        if (e.response.body.data.pc === 460) {
           enqueueSnackbar(`${msg}, mert a tranzakció típusa nem fizetési tranzakció`, { variant: 'error' })
         }
-        else if (e.response.body.data.pc === 454) {
+        else if (e.response.body.data.pc === 475) {
           enqueueSnackbar(`${msg}, mert véget ért az értékesítési időszak`, { variant: 'error' })
         }
-        else if (e.response.body.data.pc === 464) {
+        else if (e.response.body.data.pc === 485) {
           enqueueSnackbar(`${msg}, mert Ön már rendelkezik ezzel a zsetonnal`, { variant: 'error' })
         }
-        else if (e.response.body.data.pc === 472) {
+        else if (e.response.body.data.pc === 493) {
           enqueueSnackbar(`${msg}, mert a fizetési tranzakció küldője nem azonos az app call tranzakció küldőjével`, { variant: 'error' })
         }
-        else if (e.response.body.data.pc === 480) {
+        else if (e.response.body.data.pc === 501) {
           enqueueSnackbar(`${msg}, mert a fizetési tranzakció címzettje nem azonos az app címével`, { variant: 'error' })
         }
-        else if (e.response.body.data.pc === 488) {
+        else if (e.response.body.data.pc === 510) {
           enqueueSnackbar(`${msg}, mert a fizetési tranzakció összege kisebb, mint a zseton ára`, { variant: 'error' })
         }
-        else if (e.response.body.data.pc === 496) {
+        else if (e.response.body.data.pc === 519) {
           enqueueSnackbar(`${msg}, mert a fizetési tranzakció összege nagyobb, mint a zseton ára`, { variant: 'error' })
         }
-        else if (e.response.body.data.pc === 504) {
+        else if (e.response.body.data.pc === 527) {
           enqueueSnackbar(`${msg}, mert a fizetési tranzakció RekeyTo mezője nem nulla`, { variant: 'error' })
         }
-        else if (e.response.body.data.pc === 512) {
+        else if (e.response.body.data.pc === 535) {
           enqueueSnackbar(`${msg}, mert a fizetési tranzakció CloseRemainderTo mezője nem nulla`, { variant: 'error' })
         }
-        else if (e.response.body.data.pc === 515) {
+        else if (e.response.body.data.pc === 540) {
           enqueueSnackbar(`${msg}, mert nincs már eladható zseton`, { variant: 'error' })
         }
         else {

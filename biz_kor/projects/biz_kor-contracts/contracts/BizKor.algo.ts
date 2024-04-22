@@ -13,6 +13,11 @@ import { Contract } from '@algorandfoundation/tealscript';
 //    - added clawback, to force moving back assets from a given address to the app address
 //    - added deleteAsset, to delete assets from the app
 //    - modified deleteApplication
+//  v1.2, 22-Apr-2024, LG
+//    - mod clawback, to increase assetAmount
+//    - mod buyAsset, to unfreeze assetId first (test cycle: buy, clawback, buy)
+//    - mod buyAsset, make buyer to opt into asset
+//    - mod bootstrap, new param: asaValidityPeriod
 
 // eslint-disable-next-line no-unused-vars
 class BizKor extends Contract {
@@ -30,17 +35,20 @@ class BizKor extends Contract {
 
   sellPeriodEnd = GlobalStateKey<uint64>({ key: 'end' });
 
+  assetValidityPeriod = GlobalStateKey<uint64>({ key: 'asa_v' });
+
   /**
    * Init the values of global keys
    */
   createApplication(): void {
-    this.appVersion.value = 'v1.1';
+    this.appVersion.value = 'v1.2';
     this.appCreatorAddress.value = globals.creatorAddress;
     this.assetAmountInitial.value = 0;
     this.assetAmount.value = 0;
     this.assetPrice.value = 0;
     this.asset.value = AssetID.zeroIndex;
     this.sellPeriodEnd.value = 0;
+    this.assetValidityPeriod.value = 0;
   }
 
   /**
@@ -48,8 +56,9 @@ class BizKor extends Contract {
    * @param assetPrice ASA price in microAlgos
    * @param assetAmount ASA inital amount in pieces
    * @param sellPeriodLength sell period length in secs
+   * @param assetValidityPeriod asset validity in secs, after that time it can be clawbacked
    */
-  bootstrap(assetPrice: uint64, assetAmount: uint64, sellPeriodLength: uint64) {
+  bootstrap(assetPrice: uint64, assetAmount: uint64, sellPeriodLength: uint64, assetValidityPeriod: uint64) {
     /// allow only the app creator to call this method
     verifyAppCallTxn(this.txn, { sender: globals.creatorAddress });
 
@@ -76,6 +85,7 @@ class BizKor extends Contract {
     this.assetPrice.value = assetPrice;
     this.asset.value = asset;
     this.sellPeriodEnd.value = globals.latestTimestamp + sellPeriodLength;
+    this.assetValidityPeriod.value = assetValidityPeriod;
   }
 
   /**
@@ -140,10 +150,10 @@ class BizKor extends Contract {
    */
   buyAsset(payment: PayTxn): void {
     /// Ensure asset selling period hasn't ended yet
-    assert(globals.latestTimestamp < this.sellPeriodEnd.value);
+    assert(globals.latestTimestamp <= this.sellPeriodEnd.value, 'Sell period ended');
 
     /// Ensure that buyer hasn't bought earlier this asset
-    assert(this.txn.sender.assetBalance(this.asset.value) === 0);
+    assert(this.txn.sender.assetBalance(this.asset.value) === 0, 'Asset already bought');
 
     /// Verify payment transaction: receiver is the app, amount is the asset price
     verifyPayTxn(payment, {
@@ -155,7 +165,21 @@ class BizKor extends Contract {
     });
 
     /// Is there still an asset to sell? (this can be optimized away)
-    assert(this.assetAmount.value > 0);
+    assert(this.assetAmount.value > 0, 'No more ASA to sell');
+
+    /// Unfreeze asset
+    sendAssetFreeze({
+      freezeAsset: this.asset.value,
+      freezeAssetAccount: this.txn.sender,
+      freezeAssetFrozen: false,
+    });
+
+    /// Opt into asset, unconditionally
+    sendAssetTransfer({
+      xferAsset: this.asset.value,
+      assetAmount: 0,
+      assetReceiver: this.app.address,
+    });
 
     /// Send asset to the buyer
     sendAssetTransfer({
@@ -208,6 +232,9 @@ class BizKor extends Contract {
       assetSender: addr,
       assetReceiver: globals.currentApplicationAddress,
     });
+
+    /// Inc asset amount
+    this.assetAmount.value = this.assetAmount.value + 1;
   }
 
   /**
@@ -216,7 +243,7 @@ class BizKor extends Contract {
   deleteAsset(): void {
     /// Allow only the app creator to call this method
     verifyAppCallTxn(this.txn, { sender: globals.creatorAddress });
-    // assert(this.txn.sender === this.app.creator);
+    // assert(this.txn.sender === this.app.creator, 'Allow only the app creator to call this method');
 
     /// Delete asset
     sendAssetConfig({

@@ -12,9 +12,10 @@ import { useWallet } from '@txnlab/use-wallet'
   assetPrice={assetPrice}
   assetAmount={assetAmount}
   sellPeriodLength={sellPeriodLength}
+  assetValidityPeriod={assetValidityPeriod}
 />
 */
-type BizKorBootstrapArgs = BizKor['methods']['bootstrap(uint64,uint64,uint64)void']['argsObj']
+type BizKorBootstrapArgs = BizKor['methods']['bootstrap(uint64,uint64,uint64,uint64)void']['argsObj']
 
 type Props = {
   buttonClass: string
@@ -24,6 +25,7 @@ type Props = {
   assetPrice: BizKorBootstrapArgs['assetPrice']
   assetAmount: BizKorBootstrapArgs['assetAmount']
   sellPeriodLength: BizKorBootstrapArgs['sellPeriodLength']
+  assetValidityPeriod: BizKorBootstrapArgs['assetValidityPeriod']
 }
 
 const BizKorBootstrap = (props: Props) => {
@@ -39,6 +41,7 @@ const BizKorBootstrap = (props: Props) => {
         assetPrice: props.assetPrice,
         assetAmount: props.assetAmount,
         sellPeriodLength: props.sellPeriodLength,
+        assetValidityPeriod: props.assetValidityPeriod,
       },
       { sender },
     )

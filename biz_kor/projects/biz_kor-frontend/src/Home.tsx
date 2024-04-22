@@ -166,6 +166,7 @@ const Home: React.FC<HomeProps> = () => {
                 assetPrice={BigInt(10_000)}       // in /uAlgos
                 assetAmount={10}                  // pieces
                 sellPeriodLength={BigInt(1000)}   // in sec
+                assetValidityPeriod={BigInt(100)} // in sec
               />
             )}
 
