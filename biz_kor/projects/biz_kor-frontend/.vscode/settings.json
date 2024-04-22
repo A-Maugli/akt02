@@ -1,6 +1,8 @@
 {
   "editor.formatOnSave": true,
-  
+
   "dotenv.enableAutocloaking": false,
-  
+
+  "terminal.integrated.defaultProfile.windows": "Git Bash",
+
 }

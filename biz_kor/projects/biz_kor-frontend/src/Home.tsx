@@ -10,6 +10,9 @@ import BizKorCreateApplication from './components/BizKorCreateApplication'
 import BizKorBootstrap from './components/BizKorBootstrap'
 import BizKorBuyAsset from './components/BizKorBuyAsset'
 import { AlgoViteClientConfig } from './interfaces/network'
+import BizKorSendAlgosToCreator from './components/BizKorSendAlgosToCreator'
+import BizKorClawback from './components/BizKorClawback'
+import { Address } from 'cluster'
 
 interface HomeProps { }
 
@@ -20,6 +23,7 @@ const Home: React.FC<HomeProps> = () => {
   const [price, setPrice] = useState<number>(0)
   const [openDemoModal, setOpenDemoModal] = useState<boolean>(false)
   const { activeAddress } = useWallet()
+  const [clawbackAddr, setClawbackAddr] = useState<string>('IVFPPA66JN4LTTNNNK3SDJGI4XIKMOT74IMWAF4ATTHPZ7YOSCDAN2UB7E')
 
   const adminMode = import.meta.env.VITE_ADMIN_MODE === 'true';
   const viteLocalnetAppId = import.meta.env.VITE_LOCALNET_APP_ID;
@@ -55,7 +59,8 @@ const Home: React.FC<HomeProps> = () => {
   }
 */
   useEffect(() => {
-    if (!adminMode) {
+    //if (!adminMode) {
+    {
       setAppID(paramAppId);
     }
   }, [adminMode, paramAppId]);  // Függőségek, amikor a hatás fut le
@@ -136,6 +141,10 @@ const Home: React.FC<HomeProps> = () => {
               </div>
             )}
 
+            {adminMode &&(
+              <p>Admin mód</p>
+            )}
+
             {adminMode && activeAddress && appID === 0 && (
               <div>
                 <BizKorCreateApplication
@@ -148,7 +157,7 @@ const Home: React.FC<HomeProps> = () => {
               </div>
             )}
 
-            {adminMode && activeAddress && appID !== 0 && (
+            {adminMode && activeAddress && appID !== 0 && price == 0 && (
               <BizKorBootstrap
                 buttonClass="btn m-2"
                 buttonLoadingNode={<span className="loading loading-spinner" />}
@@ -171,6 +180,25 @@ const Home: React.FC<HomeProps> = () => {
               </div>
             )}
 
+            {adminMode && activeAddress && appID !== 0 && (
+              <BizKorSendAlgosToCreator
+                buttonClass="btn m-2"
+                buttonLoadingNode={<span className="loading loading-spinner" />}
+                buttonNode="Call sendAlgosToCreator"
+                typedClient={typedClient}
+              />
+            )}
+
+            {adminMode && activeAddress && appID !== 0 && (
+              <BizKorClawback
+                buttonClass="btn m-2"
+                buttonLoadingNode={<span className="loading loading-spinner" />}
+                buttonNode="Call clawback"
+                typedClient={typedClient}
+                addr={clawbackAddr}
+              />
+            )}
+
             {activeAddress && appID !== 0 && (
               <div>
                 <h2 className="font-bold m-2">App id: {appID}</h2>
@@ -179,6 +207,13 @@ const Home: React.FC<HomeProps> = () => {
               </div>
             )}
 
+            {!adminMode && (
+              <div>
+                <button data-test-id="connect-wallet" className="btn m-2" onClick={toggleWalletModal}>
+                  Kapcsolódás a pénztárcához
+                </button>
+              </div>
+            )}
 
             {!adminMode && activeAddress && appID !== 0 && (
               <BizKorBuyAsset

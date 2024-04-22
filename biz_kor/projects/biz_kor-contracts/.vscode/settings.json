@@ -3,4 +3,6 @@
     "source.fixAll.eslint": "explicit",
   },
   "editor.formatOnSave": true,
+
+  "terminal.integrated.defaultProfile.windows": "Git Bash",
 }
