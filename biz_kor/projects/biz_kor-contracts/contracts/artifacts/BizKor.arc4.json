@@ -126,7 +126,20 @@
     },
     {
       "name": "clawback",
-      "desc": "Clawback asset to app",
+      "desc": "Clawback asset to app & inc amount",
+      "args": [
+        {
+          "name": "addr",
+          "type": "address"
+        }
+      ],
+      "returns": {
+        "type": "void"
+      }
+    },
+    {
+      "name": "clawbackNoIncAmount",
+      "desc": "Clawback asset to app without incrementing amountThis method is called when the property has been bought, and the coin has been shown",
       "args": [
         {
           "name": "addr",

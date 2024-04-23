@@ -104,26 +104,20 @@ const BizKorBuyAsset = (props: Props) => {
         else if (e.response.body.data.pc === 475) {
           enqueueSnackbar(`${msg}, mert véget ért az értékesítési időszak`, { variant: 'error' })
         }
-        else if (e.response.body.data.pc === 485) {
+        else if (e.response.body.data.pc === 486) {
           enqueueSnackbar(`${msg}, mert Ön már rendelkezik ezzel a zsetonnal`, { variant: 'error' })
         }
-        else if (e.response.body.data.pc === 493) {
+        else if (e.response.body.data.pc === 494) {
           enqueueSnackbar(`${msg}, mert a fizetési tranzakció küldője nem azonos az app call tranzakció küldőjével`, { variant: 'error' })
         }
-        else if (e.response.body.data.pc === 501) {
+        else if (e.response.body.data.pc === 502) {
           enqueueSnackbar(`${msg}, mert a fizetési tranzakció címzettje nem azonos az app címével`, { variant: 'error' })
         }
-        else if (e.response.body.data.pc === 510) {
+        else if (e.response.body.data.pc === 511) {
           enqueueSnackbar(`${msg}, mert a fizetési tranzakció összege kisebb, mint a zseton ára`, { variant: 'error' })
         }
-        else if (e.response.body.data.pc === 519) {
+        else if (e.response.body.data.pc === 520) {
           enqueueSnackbar(`${msg}, mert a fizetési tranzakció összege nagyobb, mint a zseton ára`, { variant: 'error' })
-        }
-        else if (e.response.body.data.pc === 527) {
-          enqueueSnackbar(`${msg}, mert a fizetési tranzakció RekeyTo mezője nem nulla`, { variant: 'error' })
-        }
-        else if (e.response.body.data.pc === 535) {
-          enqueueSnackbar(`${msg}, mert a fizetési tranzakció CloseRemainderTo mezője nem nulla`, { variant: 'error' })
         }
         else if (e.response.body.data.pc === 540) {
           enqueueSnackbar(`${msg}, mert nincs már eladható zseton`, { variant: 'error' })

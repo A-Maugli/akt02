@@ -13,7 +13,7 @@ let appClient: BizKorClient;
 
 describe('BizKor', () => {
   const log = false; // skip console.log() calls
-  const paramAppVersion = 'v1.2'; // app version
+  const paramAppVersion = 'v1.3'; // app version
   const paramAssetPrice = 1_000_000; // microAlgos
   const paramAssetAmountInitial = 10; // pieces
   const paramSellPeriodLength = 1000; // sec

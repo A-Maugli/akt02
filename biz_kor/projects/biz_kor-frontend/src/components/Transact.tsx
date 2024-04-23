@@ -15,11 +15,7 @@ const Transact = ({ openModal, setModalState }: TransactInterface) => {
   const [receiverAddress, setReceiverAddress] = useState<string>('')
 
   const algodConfig = getAlgodConfigFromViteEnvironment()
-  const algodClient = algokit.getAlgoClient({
-    server: algodConfig.server,
-    port: algodConfig.port,
-    token: algodConfig.token,
-  })
+  const algodClient = algokit.getAlgoClient(algodConfig)
 
   const { enqueueSnackbar } = useSnackbar()
 

@@ -1,10 +1,15 @@
 import { Contract } from '@algorandfoundation/tealscript';
 
+// App for "Bizalmi Kör Tulajdonrész Opciós Vételi Jog"
+//  bootstrap creates the ASA (Algorand Standars Asset), with the specified parameters
+//  buyAsset is called to buy an ASA
+//  clawback is to send back a coin to the app which has "expired"
+
 // History:
 //  v1.0, 07-Apr-2024, LG
-//    - in buyAsset, asset is also passed as param in the txn foreign array.
-//      See tests, "assets: [Number(asset)],"
-//      Otherwise there is "unavailable asset" error
+//    - in buyAsset, asset_id is also passed as param in the txn foreign array.
+//      See tests, "assets: [Number(asset_id)],"
+//      Otherwise "unavailable asset" error occurs
 //  v1.1, 14-Apr-2024, LG
 //    - added appVersion as a global key-value pair
 //    - added getters for global values
@@ -18,6 +23,10 @@ import { Contract } from '@algorandfoundation/tealscript';
 //    - mod buyAsset, to unfreeze assetId first (test cycle: buy, clawback, buy)
 //    - mod buyAsset, make buyer to opt into asset
 //    - mod bootstrap, new param: asaValidityPeriod
+//  v1.3, 23-Apr-2024, LG
+//    - mod buyAsset, opt in comes first, before unfreeze
+//    - optimize buyAsset: do not check rekeyTo, closeRemainderTo
+//    - add clawbackNoIncAmount
 
 // eslint-disable-next-line no-unused-vars
 class BizKor extends Contract {
@@ -41,7 +50,7 @@ class BizKor extends Contract {
    * Init the values of global keys
    */
   createApplication(): void {
-    this.appVersion.value = 'v1.2';
+    this.appVersion.value = 'v1.3';
     this.appCreatorAddress.value = globals.creatorAddress;
     this.assetAmountInitial.value = 0;
     this.assetAmount.value = 0;
@@ -160,25 +169,23 @@ class BizKor extends Contract {
       sender: this.txn.sender,
       receiver: globals.currentApplicationAddress,
       amount: { greaterThanEqualTo: this.assetPrice.value, lessThanEqualTo: this.assetPrice.value },
-      rekeyTo: globals.zeroAddress,
-      closeRemainderTo: globals.zeroAddress,
     });
 
     /// Is there still an asset to sell? (this can be optimized away)
     assert(this.assetAmount.value > 0, 'No more ASA to sell');
-
-    /// Unfreeze asset
-    sendAssetFreeze({
-      freezeAsset: this.asset.value,
-      freezeAssetAccount: this.txn.sender,
-      freezeAssetFrozen: false,
-    });
 
     /// Opt into asset, unconditionally
     sendAssetTransfer({
       xferAsset: this.asset.value,
       assetAmount: 0,
       assetReceiver: this.app.address,
+    });
+
+    /// Unfreeze asset
+    sendAssetFreeze({
+      freezeAsset: this.asset.value,
+      freezeAssetAccount: this.txn.sender,
+      freezeAssetFrozen: false,
     });
 
     /// Send asset to the buyer
@@ -218,7 +225,7 @@ class BizKor extends Contract {
   }
 
   /**
-   * Clawback asset to app
+   * Clawback asset to app & inc amount
    * @param address from which to clawback asset
    */
   clawback(addr: Address): void {
@@ -236,6 +243,24 @@ class BizKor extends Contract {
     /// Inc asset amount
     this.assetAmount.value = this.assetAmount.value + 1;
   }
+
+    /**
+   * Clawback asset to app without incrementing amount
+   * This method is called when the property has been bought, and the coin has been shown
+   * @param address from which to clawback asset
+   */
+    clawbackNoIncAmount(addr: Address): void {
+      /// Allow only the app creator to call this method
+      verifyAppCallTxn(this.txn, { sender: globals.creatorAddress });
+
+      /// Clawback assets to app
+      sendAssetTransfer({
+        xferAsset: this.asset.value,
+        assetAmount: 1,
+        assetSender: addr,
+        assetReceiver: globals.currentApplicationAddress,
+      });
+    }
 
   /**
    * Delete asset within app

@@ -33,12 +33,7 @@ const Home: React.FC<HomeProps> = () => {
   var paramAppId: number; // = 1085 // app ID created before
 
   const algodConfig = getAlgodConfigFromViteEnvironment()
-
-  const algodClient = algokit.getAlgoClient({
-    server: algodConfig.server,
-    port: algodConfig.port,
-    token: algodConfig.token
-  })
+  const algodClient = algokit.getAlgoClient(algodConfig)
 
   if (algodConfig.network === '') {
     paramAppId = Number(viteLocalnetAppId)
@@ -95,6 +90,17 @@ const Home: React.FC<HomeProps> = () => {
   const handleBuyButtonClick = async () => {
     console.log('handleBuyButtonClick is called')
     await getAmount();
+  };
+
+  const handleClawbackButtonClick = async () => {
+    console.log('handleCalwbackButtonClick is called')
+    await getAmount();
+  };
+
+  const handleBootstrapButtonClick = async () => {
+    console.log('handleCalwbackButtonClick is called')
+    await getAmount();
+    await getPrice();
   };
 
   // (When the appID changes,) call getAmount
@@ -167,6 +173,7 @@ const Home: React.FC<HomeProps> = () => {
                 assetAmount={10}                  // pieces
                 sellPeriodLength={BigInt(1000)}   // in sec
                 assetValidityPeriod={BigInt(100)} // in sec
+                onClick={handleBootstrapButtonClick}
               />
             )}
 
@@ -197,6 +204,7 @@ const Home: React.FC<HomeProps> = () => {
                 buttonNode="Call clawback"
                 typedClient={typedClient}
                 addr={clawbackAddr}
+                onClick={handleClawbackButtonClick}
               />
             )}
 
