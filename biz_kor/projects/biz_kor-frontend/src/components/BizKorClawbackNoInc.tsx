@@ -43,7 +43,7 @@ const BizKorClawbackNoInc = (props: Props) => {
       {
         addr: props.addr,
       },
-      { sender, sendParams: { fee: algokit.microAlgos(2_000) }, assets: [asset]},
+      { sender, sendParams: { fee: algokit.transactionFees(2) }, assets: [asset]},
     )
     setLoading(false)
     if (props.onClick) {

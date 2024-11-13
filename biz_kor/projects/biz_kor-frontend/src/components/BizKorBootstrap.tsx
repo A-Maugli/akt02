@@ -51,7 +51,7 @@ const BizKorBootstrap = (props: Props) => {
         },
         {
           sender: sender,
-          sendParams: { fee: algokit.microAlgos(2_000) }
+          sendParams: { fee: algokit.transactionFees(2) }
         },
       )
       //console.log('bootstrap result: ', result)

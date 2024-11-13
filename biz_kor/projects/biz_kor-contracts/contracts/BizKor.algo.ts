@@ -226,7 +226,7 @@ class BizKor extends Contract {
 
   /**
    * Clawback asset to app & inc amount
-   * @param address from which to clawback asset
+   * @param addr address from which to clawback asset
    */
   clawback(addr: Address): void {
     /// Allow only the app creator to call this method
@@ -244,23 +244,23 @@ class BizKor extends Contract {
     this.assetAmount.value = this.assetAmount.value + 1;
   }
 
-    /**
+  /**
    * Clawback asset to app without incrementing amount
    * This method is called when the property has been bought, and the coin has been shown
-   * @param address from which to clawback asset
+   * @param addr address from which to clawback asset
    */
-    clawbackNoIncAmount(addr: Address): void {
-      /// Allow only the app creator to call this method
-      verifyAppCallTxn(this.txn, { sender: globals.creatorAddress });
+  clawbackNoIncAmount(addr: Address): void {
+    /// Allow only the app creator to call this method
+    verifyAppCallTxn(this.txn, { sender: globals.creatorAddress });
 
-      /// Clawback assets to app
-      sendAssetTransfer({
-        xferAsset: this.asset.value,
-        assetAmount: 1,
-        assetSender: addr,
-        assetReceiver: globals.currentApplicationAddress,
-      });
-    }
+    /// Clawback assets to app
+    sendAssetTransfer({
+      xferAsset: this.asset.value,
+      assetAmount: 1,
+      assetSender: addr,
+      assetReceiver: globals.currentApplicationAddress,
+    });
+  }
 
   /**
    * Delete asset within app

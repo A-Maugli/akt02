@@ -29,7 +29,7 @@ const BizKorSendAlgosToCreator = (props: Props) => {
     console.log(`Calling sendAlgosToCreator`)
     await props.typedClient.sendAlgosToCreator(
       {},
-      { sender, sendParams: { fee: algokit.microAlgos(2_000) } }
+      { sender, sendParams: { fee: algokit.transactionFees(2) } }
     )
     setLoading(false)
   }

@@ -130,7 +130,8 @@
       "args": [
         {
           "name": "addr",
-          "type": "address"
+          "type": "address",
+          "desc": "address from which to clawback asset"
         }
       ],
       "returns": {
@@ -143,7 +144,8 @@
       "args": [
         {
           "name": "addr",
-          "type": "address"
+          "type": "address",
+          "desc": "address from which to clawback asset"
         }
       ],
       "returns": {

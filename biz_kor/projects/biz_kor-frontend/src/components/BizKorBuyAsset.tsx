@@ -56,6 +56,7 @@ const BizKorBuyAsset = (props: Props) => {
         suggestedParams: params,
       });
     algokit.sendTransaction({transaction: txn1, from: sender }, algod);
+    //await algokit.waitForConfirmation(txn1.txID(), 4, algod);
 
     console.log(`Calling buyAsset`)
     const appRef = await props.typedClient.appClient.getAppReference();
@@ -69,63 +70,53 @@ const BizKorBuyAsset = (props: Props) => {
       suggestedParams: params,
     });
 
-    const compose = props.typedClient.compose().buyAsset(
-      {
-        payment: tx1,
-      },
-      {
-        sender: sender,
-        sendParams: {
-          fee: algokit.microAlgos(5000),
+    try {
+      enqueueSnackbar('A vételi tranzakció elküldése...', { variant: 'info' })
+      const result = await props.typedClient.compose().buyAsset(
+        {
+          payment: tx1,
         },
-        assets: [Number(asset)],
+        {
+          sender: sender,
+          sendParams: {
+            fee: algokit.transactionFees(5),
+          },
+          assets: [Number(asset)],
+        }
+      ).execute();
+      const waitRoundsToConfirm = 4;
+      await algokit.waitForConfirmation(result.txIds[0], waitRoundsToConfirm, algod);
+      enqueueSnackbar(`A vételi tranzakció elküldve: ${result.txIds[0]}`, { variant: 'success' })
+    } catch(e: any) {
+      const msg='Nem sikerült a tranzakció elküldése';
+      if (e.response.body.data.pc === 460) {
+        enqueueSnackbar(`${msg}, mert a tranzakció típusa nem fizetési tranzakció`, { variant: 'error' })
       }
-    );
-
-    const atc = await compose.atc();
-      const txs = atc.buildGroup().map((tx) => tx.txn);
-      const signed = await signer(
-        txs,
-        Array.from(Array(txs.length), (_, i) => i)
-      );
-      //const { txId } = await algod.sendRawTransaction(signed).do();
-      //console.log('buyAsset txId:', txId);
-
-      try {
-        enqueueSnackbar('A vételi tranzakció elküldése...', { variant: 'info' })
-        const waitRoundsToConfirm = 4
-        const { id } = await sendTransactions(signed, waitRoundsToConfirm)
-        enqueueSnackbar(`A tranzakció elküldve: ${id}`, { variant: 'success' })
-      } catch (e: any) {
-        const msg='Nem sikerült a tranzakció elküldése';
-        if (e.response.body.data.pc === 460) {
-          enqueueSnackbar(`${msg}, mert a tranzakció típusa nem fizetési tranzakció`, { variant: 'error' })
-        }
-        else if (e.response.body.data.pc === 475) {
-          enqueueSnackbar(`${msg}, mert véget ért az értékesítési időszak`, { variant: 'error' })
-        }
-        else if (e.response.body.data.pc === 486) {
-          enqueueSnackbar(`${msg}, mert Ön már rendelkezik ezzel a zsetonnal`, { variant: 'error' })
-        }
-        else if (e.response.body.data.pc === 494) {
-          enqueueSnackbar(`${msg}, mert a fizetési tranzakció küldője nem azonos az app call tranzakció küldőjével`, { variant: 'error' })
-        }
-        else if (e.response.body.data.pc === 502) {
-          enqueueSnackbar(`${msg}, mert a fizetési tranzakció címzettje nem azonos az app címével`, { variant: 'error' })
-        }
-        else if (e.response.body.data.pc === 511) {
-          enqueueSnackbar(`${msg}, mert a fizetési tranzakció összege kisebb, mint a zseton ára`, { variant: 'error' })
-        }
-        else if (e.response.body.data.pc === 520) {
-          enqueueSnackbar(`${msg}, mert a fizetési tranzakció összege nagyobb, mint a zseton ára`, { variant: 'error' })
-        }
-        else if (e.response.body.data.pc === 540) {
-          enqueueSnackbar(`${msg}, mert nincs már eladható zseton`, { variant: 'error' })
-        }
-        else {
-          enqueueSnackbar(`${msg}, hiba: `+e, { variant: 'error' })
-        }
+      else if (e.response.body.data.pc === 475) {
+        enqueueSnackbar(`${msg}, mert véget ért az értékesítési időszak`, { variant: 'error' })
       }
+      else if (e.response.body.data.pc === 486) {
+        enqueueSnackbar(`${msg}, mert Ön már rendelkezik ezzel a zsetonnal`, { variant: 'error' })
+      }
+      else if (e.response.body.data.pc === 494) {
+        enqueueSnackbar(`${msg}, mert a fizetési tranzakció küldője nem azonos az app call tranzakció küldőjével`, { variant: 'error' })
+      }
+      else if (e.response.body.data.pc === 502) {
+        enqueueSnackbar(`${msg}, mert a fizetési tranzakció címzettje nem azonos az app címével`, { variant: 'error' })
+      }
+      else if (e.response.body.data.pc === 511) {
+        enqueueSnackbar(`${msg}, mert a fizetési tranzakció összege kisebb, mint a zseton ára`, { variant: 'error' })
+      }
+      else if (e.response.body.data.pc === 520) {
+        enqueueSnackbar(`${msg}, mert a fizetési tranzakció összege nagyobb, mint a zseton ára`, { variant: 'error' })
+      }
+      else if (e.response.body.data.pc === 540) {
+        enqueueSnackbar(`${msg}, mert nincs már eladható zseton`, { variant: 'error' })
+      }
+      else {
+        enqueueSnackbar(`${msg}, hiba: `+e, { variant: 'error' })
+      }
+    }
 
     setLoading(false)
 

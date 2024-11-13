@@ -73,7 +73,7 @@ const BizKorClawback = (props: Props) => {
                   {
                     addr: result.accounts[i].address,
                   },
-                  { sender, sendParams: { fee: algokit.microAlgos(2_000) }, assets: [assetId] },
+                  { sender, sendParams: { fee: algokit.transactionFees(2) }, assets: [assetId] },
                 )
               }
             }
@@ -95,7 +95,7 @@ const BizKorClawback = (props: Props) => {
       {
         addr: props.addr,
       },
-      { sender, sendParams: { fee: algokit.microAlgos(2_000) }, assets: [asset]},
+      { sender, sendParams: { fee: algokit.transactionFees(2) }, assets: [asset]},
     )
 --*/
     setLoading(false)

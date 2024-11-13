@@ -75,10 +75,10 @@ describe('BizKor', () => {
     const assetAmount = paramAssetAmountInitial;
     const sellPeriodLength = paramSellPeriodLength;
     const assetValidityPeriod = paramAssetValidityPeriod;
-    // fee must be 2000 /uAlgos, due to the inner transaction
+    // fee must be paid for 2 txns, due to the inner transaction
     await appClient.bootstrap(
       { assetPrice, assetAmount, sellPeriodLength, assetValidityPeriod },
-      { sendParams: { fee: algokit.microAlgos(2_000) } }
+      { sendParams: { fee: algokit.transactionFees(2) } }
     );
     const globalState = await appClient.getGlobalState();
     expect(globalState.asa_total?.asNumber()).toBe(assetAmount);
@@ -205,27 +205,21 @@ describe('BizKor', () => {
     // Buy asset
     const globalState = await appClient.getGlobalState();
     const asset = globalState.asa_id!.asNumber();
-    const compose = appClient.compose().buyAsset(
-      {
-        payment: tx1,
-      },
-      {
-        sender: signer1,
-        sendParams: {
-          fee: algokit.microAlgos(5000),
+    // eslint-disable-next-line prettier/prettier
+    const result = await appClient.compose().buyAsset(
+        {
+          payment: tx1,
         },
-        assets: [Number(asset)],
-      }
-    );
-    // atc, build group, sign, send
-    const atc = await compose.atc();
-    const txs = atc.buildGroup().map((tx) => tx.txn);
-    const signed = await signer1.signer(
-      txs,
-      Array.from(Array(txs.length), (_, i) => i)
-    );
-    const txg = await algod.sendRawTransaction(signed).do();
-    await algosdk.waitForConfirmation(algod, txg.txId, 4);
+        {
+          sender: signer1,
+          sendParams: {
+            fee: algokit.transactionFees(5),
+          },
+          assets: [Number(asset)],
+        }
+      )
+      .execute();
+    await algokit.waitForConfirmation(result.txIds[0], 4, algod);
   });
 
   test('buyAsset 2nd time', async () => {
@@ -245,41 +239,37 @@ describe('BizKor', () => {
       suggestedParams: params,
     });
 
-    // Buy asset
+    // Buy asset 2nd time => should fail
     const globalState = await appClient.getGlobalState();
     const asset = globalState.asa_id!.asNumber();
-    const compose = appClient.compose().buyAsset(
-      {
-        payment: tx1,
-      },
-      {
-        sender: signer1,
-        sendParams: {
-          fee: algokit.microAlgos(5000),
-        },
-        assets: [Number(asset)],
-      }
-    );
-
-    const atc = await compose.atc();
-    const txs = atc.buildGroup().map((tx) => tx.txn);
-    const signed = await signer1.signer(
-      txs,
-      Array.from(Array(txs.length), (_, i) => i)
-    );
     try {
-      await algod.sendRawTransaction(signed).do();
+      // eslint-disable-next-line prettier/prettier
+      const result = await appClient.compose().buyAsset(
+          {
+            payment: tx1,
+          },
+          {
+            sender: signer1,
+            sendParams: {
+              fee: algokit.transactionFees(5),
+            },
+            assets: [Number(asset)],
+          }
+        )
+        .execute();
+
+      await algokit.waitForConfirmation(result.txIds[0], 4, algod);
     } catch (err) {
       console.log('this test should fail, as the buyer already has a coin', err); // err.response.body.data.pc);
     }
   });
 
   test('sendAlgosToCreator', async () => {
-    await appClient.sendAlgosToCreator({}, { sendParams: { fee: algokit.microAlgos(2_000) } });
+    await appClient.sendAlgosToCreator({}, { sendParams: { fee: algokit.transactionFees(2) } });
   });
 
   test('clawback', async () => {
-    await appClient.clawback({ addr: acc1.addr }, { sendParams: { fee: algokit.microAlgos(2_000) } });
+    await appClient.clawback({ addr: acc1.addr }, { sendParams: { fee: algokit.transactionFees(2) } });
   });
 
   test('buyAsset after clawback', async () => {
@@ -301,31 +291,25 @@ describe('BizKor', () => {
     // Buy asset
     const globalState = await appClient.getGlobalState();
     const asset = globalState.asa_id!.asNumber();
-    const compose = appClient.compose().buyAsset(
-      {
-        payment: tx1,
-      },
-      {
-        sender: signer1,
-        sendParams: {
-          fee: algokit.microAlgos(5000),
+    // eslint-disable-next-line prettier/prettier
+    const result = await appClient.compose().buyAsset(
+        {
+          payment: tx1,
         },
-        assets: [Number(asset)],
-      }
-    );
-    // atc, build group, sign, send
-    const atc = await compose.atc();
-    const txs = atc.buildGroup().map((tx) => tx.txn);
-    const signed = await signer1.signer(
-      txs,
-      Array.from(Array(txs.length), (_, i) => i)
-    );
-    const txg = await algod.sendRawTransaction(signed).do();
-    await algosdk.waitForConfirmation(algod, txg.txId, 4);
+        {
+          sender: signer1,
+          sendParams: {
+            fee: algokit.transactionFees(5),
+          },
+          assets: [Number(asset)],
+        }
+      )
+      .execute();
+    await algosdk.waitForConfirmation(algod, result.txIds[0], 4);
   });
 
   test('clawback again', async () => {
-    await appClient.clawback({ addr: acc1.addr }, { sendParams: { fee: algokit.microAlgos(2_000) } });
+    await appClient.clawback({ addr: acc1.addr }, { sendParams: { fee: algokit.transactionFees(2) } });
   });
 
   test('opt out buyer from asset', async () => {
@@ -349,10 +333,10 @@ describe('BizKor', () => {
   });
 
   test('deleteAsset', async () => {
-    await appClient.deleteAsset({}, { sendParams: { fee: algokit.microAlgos(2_000) } });
+    await appClient.deleteAsset({}, { sendParams: { fee: algokit.transactionFees(2) } });
   });
 
   test('deleteApplication', async () => {
-    await appClient.delete.deleteApplication({}, { sendParams: { fee: algokit.microAlgos(2_000) } });
+    await appClient.delete.deleteApplication({}, { sendParams: { fee: algokit.transactionFees(2) } });
   });
 });

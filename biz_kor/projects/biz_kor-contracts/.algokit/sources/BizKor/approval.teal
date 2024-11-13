@@ -771,7 +771,7 @@ sendAlgosToCreator:
 // clawback(addr: Address): void
 //
 // Clawback asset to app & inc amount
-// @param address from which to clawback asset
+// @param addr address from which to clawback asset
 clawback:
 	proto 1 0
 
@@ -854,7 +854,7 @@ clawback:
 //
 // Clawback asset to app without incrementing amount
 // This method is called when the property has been bought, and the coin has been shown
-// @param address from which to clawback asset
+// @param addr address from which to clawback asset
 clawbackNoIncAmount:
 	proto 1 0
 
@@ -870,11 +870,11 @@ clawbackNoIncAmount:
 	// Clawback assets to app
 	// contracts\BizKor.algo.ts:257
 	// sendAssetTransfer({
-	//         xferAsset: this.asset.value,
-	//         assetAmount: 1,
-	//         assetSender: addr,
-	//         assetReceiver: globals.currentApplicationAddress,
-	//       })
+	//       xferAsset: this.asset.value,
+	//       assetAmount: 1,
+	//       assetSender: addr,
+	//       assetReceiver: globals.currentApplicationAddress,
+	//     })
 	itxn_begin
 	int axfer
 	itxn_field TypeEnum
