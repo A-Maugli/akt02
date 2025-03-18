@@ -1,0 +1,19 @@
+{
+  "name": "ts_api",
+  "version": "1.0.0",
+  "description": "TS SDK samples",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "algosdk": "^3"
+  },
+  "keywords": [],
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "typescript": "^5.8.2"
+  }
+}
